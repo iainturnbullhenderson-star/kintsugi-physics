@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 05: Inertia as Local Space</title>
+<style>
+:root{--black:#04050a;--deep:#08090f;--surf:#0f1018;--surf2:#161822;
+--gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.25);
+--text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+--blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;
+--serif:Georgia,'Times New Roman',serif;--sans:'Trebuchet MS',system-ui,sans-serif;--mono:'Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+.mod-header{padding:2.5rem 2rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.08);max-width:1100px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.75rem}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;color:var(--bright)}
+h1 em{font-style:italic;color:var(--gold2)}
+.provocation{font-family:var(--serif);font-style:italic;color:var(--text2);font-size:1rem;margin-top:.5rem;max-width:60ch}
+
+/* ── MAIN LAYOUT ── */
+.main-layout{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1100px;margin:0 auto;min-height:70vh}
+@media(max-width:860px){.main-layout{grid-template-columns:1fr}}
+.sim-col{padding:1.5rem;background:var(--deep);border-right:1px solid rgba(201,168,76,.08);display:flex;flex-direction:column;gap:.75rem}
+@media(max-width:860px){.sim-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.08)}}
+.canvas-wrap{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:6px;overflow:hidden;border:1px solid rgba(201,168,76,.12)}
+canvas{display:block;width:100%;height:100%}
+
+.ctrl-row{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.65rem}
+.ctrl-row label{color:var(--text2);letter-spacing:.08em;min-width:70px}
+.ctrl-row input[type=range]{flex:1;accent-color:var(--gold)}
+.ctrl-row .val{color:var(--gold);min-width:32px;text-align:right}
+.btn-row{display:flex;gap:.4rem;flex-wrap:wrap}
+.sim-btn{padding:.4rem .75rem;background:none;border:1px solid rgba(201,168,76,.15);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.sim-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.sim-btn.active{background:rgba(201,168,76,.12);color:var(--gold2);border-color:var(--gold-dim)}
+.readout{display:flex;gap:.8rem;flex-wrap:wrap;font-family:var(--mono);font-size:.6rem;color:var(--text2)}
+.readout span{display:flex;align-items:center;gap:.3rem}
+.readout .dot{width:6px;height:6px;border-radius:50%}
+
+.note-text{font-family:var(--mono);font-size:.6rem;color:var(--text2);opacity:.65;letter-spacing:.06em;line-height:1.5}
+
+/* ── NARRATIVE ── */
+.narr-col{padding:2rem 2.5rem;overflow-y:auto}
+.narr-stage{padding:1.5rem 0;border-bottom:1px solid rgba(201,168,76,.06)}
+.narr-stage:last-child{border:none}
+.stage-num{font-family:var(--mono);font-size:.6rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.6rem}
+.narr-stage h2{font-family:var(--serif);font-size:clamp(1.1rem,2vw,1.5rem);font-weight:400;color:var(--bright);margin-bottom:.8rem;line-height:1.3}
+.narr-stage h2 em{font-style:italic;color:var(--gold2)}
+.narr-stage p{font-size:.88rem;line-height:1.85;color:var(--text);max-width:52ch;margin-bottom:.7rem}
+.narr-stage p em{font-style:italic;color:var(--bright)}
+.narr-stage p strong{font-weight:400;color:var(--gold2)}
+.kintsugi-box{background:rgba(201,168,76,.05);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:1rem 1.25rem;margin:1rem 0}
+.kintsugi-box p{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--bright);margin:0;line-height:1.7}
+
+/* ── THOUGHT EXPERIMENTS ── */
+.thought-section{max-width:1100px;margin:0 auto;padding:2.5rem 2rem;border-top:1px solid rgba(201,168,76,.08)}
+.section-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.section-title{font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--bright);margin-bottom:1.5rem}
+.thought-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.thought-card{background:var(--surf2);border:1px solid rgba(201,168,76,.1);border-radius:8px;padding:1.5rem;transition:border-color .3s}
+.thought-card:hover{border-color:var(--gold-dim)}
+.thought-who{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;color:var(--text2);text-transform:uppercase;margin-bottom:.5rem}
+.thought-title{font-family:var(--serif);font-size:1.05rem;color:var(--bright);margin-bottom:.5rem}
+.thought-body{font-size:.8rem;color:var(--text);line-height:1.65}
+.thought-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--teal);margin-top:.6rem;padding-top:.6rem;border-top:1px solid rgba(77,168,160,.15);line-height:1.5}
+
+/* ── PHYSICISTS + NAV ── */
+.physicist-section{padding:2rem;max-width:1100px;margin:0 auto}
+.physicist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin-top:1rem}
+.ph-card{background:var(--surf2);border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.25rem}
+.ph-name{font-family:var(--serif);font-size:1rem;color:var(--gold2);margin-bottom:.15rem}
+.ph-dates{font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.15em;margin-bottom:.5rem}
+.ph-text{font-size:.78rem;color:var(--text);line-height:1.6}
+.ph-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--teal);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.15)}
+.module-nav{display:flex;justify-content:space-between;padding:2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08);font-family:var(--mono);font-size:.7rem}
+.module-nav a{color:var(--text2);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:1px}
+.module-nav a:hover{color:var(--gold2)}
+</style>
+</head>
+<body>
+
+<div class="mod-header">
+  <div class="eyebrow">Kintsugi Physics · Module 05 of VII</div>
+  <h1>Inertia as <em>Local Space</em></h1>
+  <div class="provocation">What if inertia is not a property of mass at all — but a relationship between local space and everything else?</div>
+</div>
+
+<div class="main-layout">
+  <div class="sim-col">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="640" height="480"></canvas>
+    </div>
+
+    <div class="ctrl-row">
+      <label>Mass</label>
+      <input type="range" id="mass-slider" min="0.5" max="8" step="0.1" value="2">
+      <span class="val" id="mass-val">2.0</span>
+    </div>
+    <div class="ctrl-row">
+      <label>Thrust</label>
+      <input type="range" id="thrust-slider" min="0" max="5" step="0.1" value="0">
+      <span class="val" id="thrust-val">0.0</span>
+    </div>
+    <div class="ctrl-row">
+      <label>Grid density</label>
+      <input type="range" id="grid-slider" min="8" max="30" step="1" value="16">
+      <span class="val" id="grid-val">16</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="sim-btn active" id="btn-newton">Newton</button>
+      <button class="sim-btn" id="btn-mach">Mach</button>
+      <button class="sim-btn" id="btn-kintsugi">Kintsugi</button>
+      <button class="sim-btn" id="btn-reset" style="border-color:rgba(196,113,74,.3);color:var(--coral)">Reset</button>
+    </div>
+
+    <div class="readout" id="readout">
+      <span><span class="dot" style="background:var(--gold)"></span>Velocity: <b id="r-vel">0.00</b></span>
+      <span><span class="dot" style="background:var(--coral)"></span>Acceleration: <b id="r-acc">0.00</b></span>
+      <span><span class="dot" style="background:var(--teal)"></span>Grid strain: <b id="r-strain">0.00</b></span>
+      <span><span class="dot" style="background:var(--blue)"></span>Frame drag: <b id="r-drag">0.00</b></span>
+    </div>
+
+    <div class="note-text">Use thrust slider to accelerate the mass. Watch how the surrounding space grid responds differently in each model. Click the mass to toggle gravitational well visibility.</div>
+  </div>
+
+  <div class="narr-col">
+    <div class="narr-stage">
+      <div class="stage-num">The standard story</div>
+      <h2>Newton: inertia is<br><em>resistance to acceleration.</em></h2>
+      <p>F = ma. Force equals mass times acceleration. Inertia is the <em>m</em> in that equation — the quantity that tells you how hard it is to change something's motion. More mass, more inertia, more force needed.</p>
+      <p>This is correct. It has been correct for 340 years. The question Newton never answered: <em>resistance relative to what?</em></p>
+      <p>Relative to absolute space, he said. An invisible, immovable background against which all motion is measured. Newton believed in it. He knew it was philosophically ugly. He used it anyway.</p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The Machian challenge</div>
+      <h2>Mach: there is no<br><em>absolute space.</em></h2>
+      <p>Ernst Mach argued that inertia is not resistance to acceleration relative to nothing — it is resistance to acceleration <em>relative to the distant stars</em>. The entire mass distribution of the universe determines the local inertial frame.</p>
+      <p>Einstein was inspired by Mach's principle when developing general relativity. But GR doesn't fully implement it. The metric of spacetime is influenced by matter, but there remain vacuum solutions (empty universes with structure) that Mach would have rejected.</p>
+      <p>Toggle the <strong>Mach</strong> view. Watch how the grid responds not from the mass outward, but from the boundary inward. The distant matter is the reference frame.</p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The golden seam</div>
+      <h2>Kintsugi: inertia is<br><em>local space dragging against itself.</em></h2>
+      <p>In Kintsugi Physics, inertia arises because a massive object distorts the local field topology (Module 02). When you accelerate the object, you are trying to move that distortion through the surrounding field — and the field resists, because the distortion is coupled to it.</p>
+      <p>This is not metaphorical. Frame-dragging — the Lense-Thirring effect, measured by Gravity Probe B in 2011 — shows that rotating masses literally drag spacetime around with them. Inertia, in the Kintsugi picture, is the linear equivalent: <em>translational frame-dragging.</em></p>
+      <div class="kintsugi-box"><p>"The mass does not resist acceleration because it is heavy. It resists because it is a frozen topological configuration of the field, and moving that configuration requires deforming the field around it. Inertia is the field's stiffness, not the object's stubbornness."</p></div>
+      <p>Toggle the <strong>Kintsugi</strong> view. Watch the gold seams — the topological coupling between the mass and the grid. The resistance is visible: the grid deforms ahead of the mass and relaxes behind it, and that asymmetry <em>is</em> the inertial force.</p>
+    </div>
+  </div>
+</div>
+
+<!-- THOUGHT EXPERIMENTS -->
+<div class="thought-section">
+  <div class="section-eyebrow">Three thought experiments</div>
+  <div class="section-title">Testing the models against intuition</div>
+  <div class="thought-grid">
+    <div class="thought-card">
+      <div class="thought-who">Newton's bucket · 1689</div>
+      <div class="thought-title">Water in a spinning bucket curves upward. Relative to what?</div>
+      <div class="thought-body">Newton argued: relative to absolute space. The bucket is spinning; the water knows it, even though relative to the bucket it is stationary. Therefore absolute space must exist.</div>
+      <div class="thought-kintsugi">Kintsugi: the water curves because it is accelerating relative to the local field topology. The field is anchored by the distant matter distribution — not by "absolute space." Mach was right about the reference; Newton was right about the effect.</div>
+    </div>
+    <div class="thought-card">
+      <div class="thought-who">Mach's worry · 1883</div>
+      <div class="thought-title">If you removed all the distant stars, would inertia vanish?</div>
+      <div class="thought-body">Mach implied yes. If inertia is determined by the distant mass distribution, then an empty universe should have no inertia. GR says no — empty Minkowski space has inertial structure even with no matter.</div>
+      <div class="thought-kintsugi">Kintsugi: the field topology has its own stiffness independent of matter content. Inertia requires the field, not the stars. The stars shape the field's configuration; they do not create the field's capacity to resist deformation.</div>
+    </div>
+    <div class="thought-card">
+      <div class="thought-who">Gravity Probe B · 2004–2011</div>
+      <div class="thought-title">Does rotating mass drag space around with it?</div>
+      <div class="thought-body">Yes. Gravity Probe B measured the Lense-Thirring effect: four gyroscopes in orbit around Earth precessed exactly as GR predicted, confirming that the rotating Earth drags the local inertial frame.</div>
+      <div class="thought-kintsugi">Kintsugi: frame-dragging IS inertia made visible. A rotating frozen topology drags the field. A linearly accelerating topology does the same. Inertia and frame-dragging are the same phenomenon — one rotational, one translational.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHYSICISTS -->
+<div class="physicist-section">
+  <div class="section-eyebrow">Voices behind this seam</div>
+  <div class="physicist-grid" id="physGrid"></div>
+</div>
+
+<div class="module-nav">
+  <a href="03-keplers-ghosts.html">← Module 03: Kepler's Ghosts</a>
+  <a href="04-flemings-geometry.html">← Module 04: Fleming's Geometry</a>
+  <a href="06-prime-structures.html">Module 06: Prime Structures →</a>
+</div>
+
+<script>
+const TAU = Math.PI * 2;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let mass = 2.0;
+let thrust = 0;
+let gridN = 16;
+let mode = 'newton'; // 'newton','mach','kintsugi'
+let showWell = true;
+
+// Object state
+let objX = W * 0.35, objY = H * 0.5;
+let objVx = 0, objVy = 0;
+let animT = 0;
+
+// ── GRID ──
+function getGridPoint(gx, gy, ox, oy, vx, vy, acc, m) {
+  let dx = gx - ox, dy = gy - oy;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist < 1) dist = 1;
+  let px = gx, py = gy;
+
+  if (mode === 'newton') {
+    // Pure gravitational well — static depression
+    if (showWell) {
+      const pull = m * 800 / (dist * dist + 400);
+      px += dx/dist * (-pull);
+      py += dy/dist * (-pull);
+    }
+    // No dynamic grid response to acceleration in Newton's model
+  }
+  else if (mode === 'mach') {
+    // Grid responds from boundary inward — distant stars define frame
+    // The grid "knows" about the acceleration through a wave from the edges
+    if (showWell) {
+      const pull = m * 600 / (dist * dist + 400);
+      px += dx/dist * (-pull);
+      py += dy/dist * (-pull);
+    }
+    // Machian response: grid deformation depends on distance from boundary
+    const bDist = Math.min(gx, gy, W-gx, H-gy);
+    const boundaryInfluence = Math.max(0, 1 - bDist / 240);
+    const machDrag = acc * boundaryInfluence * 15;
+    px -= machDrag; // grid pushed opposite to acceleration, from edges
+    // Distant stars "pulling" the frame
+    const starPull = acc * (1 - boundaryInfluence) * 3;
+    px -= starPull * 0.2;
+  }
+  else if (mode === 'kintsugi') {
+    // Topological coupling: grid deforms asymmetrically around mass
+    if (showWell) {
+      const pull = m * 800 / (dist * dist + 300);
+      px += dx/dist * (-pull);
+      py += dy/dist * (-pull);
+    }
+    // Asymmetric deformation during acceleration
+    // Ahead of mass: compression. Behind: rarefaction.
+    const dotProduct = dx * vx + dy * vy; // alignment with velocity
+    const speed = Math.sqrt(vx*vx + vy*vy);
+    if (speed > 0.1) {
+      // Compression ahead, stretching behind
+      const alignment = dotProduct / (dist * speed);
+      const coupling = m * 18 / (dist + 30);
+      const deform = alignment * coupling * speed * 0.4;
+      px += (dx/dist) * deform;
+      py += (dy/dist) * deform;
+    }
+    // Frame-dragging: nearby grid moves WITH the mass
+    const dragR = 30 + m * 15;
+    if (dist < dragR) {
+      const dragStrength = (1 - dist/dragR) * 0.3;
+      px += vx * dragStrength;
+      py += vy * dragStrength;
+    }
+  }
+  return {x: px, y: py};
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  const acc = thrust / mass;
+  const stepX = W / gridN;
+  const stepY = H / gridN;
+
+  // ── Draw grid ──
+  for (let i = 0; i <= gridN; i++) {
+    // Horizontal lines
+    ctx.beginPath();
+    for (let j = 0; j <= gridN * 2; j++) {
+      const gx = j * stepX / 2;
+      const gy = i * stepY;
+      const p = getGridPoint(gx, gy, objX, objY, objVx, objVy, acc, mass);
+      j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(91,138,191,0.18)';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+
+    // Vertical lines
+    ctx.beginPath();
+    for (let j = 0; j <= gridN * 2; j++) {
+      const gx = i * stepX;
+      const gy = j * stepY / 2;
+      const p = getGridPoint(gx, gy, objX, objY, objVx, objVy, acc, mass);
+      j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = 'rgba(91,138,191,0.18)';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
+
+  // ── Kintsugi gold seams ──
+  if (mode === 'kintsugi') {
+    const speed = Math.sqrt(objVx*objVx + objVy*objVy);
+    if (speed > 0.3) {
+      const nx = objVx/speed, ny = objVy/speed;
+      // Gold seams radiating from mass along velocity direction
+      for (let s = -3; s <= 3; s++) {
+        const angle = Math.atan2(ny, nx) + s * 0.25;
+        const sx = Math.cos(angle), sy = Math.sin(angle);
+        ctx.beginPath();
+        for (let t = 0; t < 150; t += 2) {
+          const gx = objX + sx * t;
+          const gy = objY + sy * t;
+          const p = getGridPoint(gx, gy, objX, objY, objVx, objVy, acc, mass);
+          const alpha = Math.max(0, 0.5 - t/200) * Math.min(1, speed/3);
+          t === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = `rgba(201,168,76,0.35)`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+    // Coupling rings
+    const nRings = 3;
+    for (let r = 1; r <= nRings; r++) {
+      const radius = 20 + r * mass * 8;
+      ctx.beginPath();
+      for (let a = 0; a < TAU; a += 0.05) {
+        const gx = objX + Math.cos(a) * radius;
+        const gy = objY + Math.sin(a) * radius;
+        const p = getGridPoint(gx, gy, objX, objY, objVx, objVy, acc, mass);
+        a === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = `rgba(201,168,76,${0.25 - r*0.06})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // ── Mach boundary glow ──
+  if (mode === 'mach' && thrust > 0) {
+    const glow = Math.sin(animT * 2) * 0.1 + 0.2;
+    ctx.strokeStyle = `rgba(136,117,196,${glow})`;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, W-4, H-4);
+    // Arrow labels at edges
+    ctx.font = '9px Courier New';
+    ctx.fillStyle = `rgba(136,117,196,${glow + 0.1})`;
+    ctx.textAlign = 'center';
+    ctx.fillText('← distant stars define the reference frame →', W/2, 16);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Draw mass object ──
+  const grad = ctx.createRadialGradient(objX, objY, 0, objX, objY, 8 + mass*4);
+  const mColor = mode === 'kintsugi' ? [201,168,76] : mode === 'mach' ? [136,117,196] : [91,138,191];
+  grad.addColorStop(0, `rgba(${mColor},0.9)`);
+  grad.addColorStop(0.5, `rgba(${mColor},0.3)`);
+  grad.addColorStop(1, `rgba(${mColor},0)`);
+  ctx.beginPath();
+  ctx.arc(objX, objY, 8 + mass*4, 0, TAU);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  // Core
+  ctx.beginPath();
+  ctx.arc(objX, objY, 4 + mass*1.5, 0, TAU);
+  ctx.fillStyle = `rgb(${mColor})`;
+  ctx.fill();
+
+  // ── Thrust indicator ──
+  if (thrust > 0) {
+    const tLen = thrust * 15;
+    ctx.beginPath();
+    ctx.moveTo(objX - 6 - mass*2, objY);
+    ctx.lineTo(objX - 6 - mass*2 - tLen, objY - 4);
+    ctx.lineTo(objX - 6 - mass*2 - tLen, objY + 4);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(196,113,74,${0.5 + Math.sin(animT*8)*0.2})`;
+    ctx.fill();
+  }
+
+  // ── Velocity trail ──
+  const speed = Math.sqrt(objVx*objVx + objVy*objVy);
+  if (speed > 0.5) {
+    ctx.beginPath();
+    ctx.moveTo(objX, objY);
+    ctx.lineTo(objX - objVx*12, objY - objVy*12);
+    ctx.strokeStyle = 'rgba(201,168,76,0.25)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // ── Mode label ──
+  ctx.font = '11px Courier New';
+  ctx.fillStyle = mode === 'kintsugi' ? 'rgba(201,168,76,0.5)' : mode === 'mach' ? 'rgba(136,117,196,0.5)' : 'rgba(91,138,191,0.5)';
+  ctx.textAlign = 'left';
+  const modeLabels = {
+    newton: 'NEWTON · Absolute space · grid is passive backdrop',
+    mach: 'MACH · Distant stars define frame · grid responds from boundary',
+    kintsugi: 'KINTSUGI · Local topology couples to field · grid deforms with mass'
+  };
+  ctx.fillText(modeLabels[mode], 10, H - 10);
+}
+
+function physics() {
+  // Apply thrust (rightward)
+  const acc = thrust / mass;
+  objVx += acc * 0.05;
+  // Mild drag so it doesn't fly off screen
+  objVx *= 0.998;
+  objVy *= 0.998;
+  objX += objVx;
+  objY += objVy;
+  // Wrap
+  if (objX > W + 40) { objX = -30; }
+  if (objX < -40) { objX = W + 30; }
+  if (objY > H + 20) { objY = -10; }
+  if (objY < -20) { objY = H + 10; }
+
+  // Update readouts
+  const speed = Math.sqrt(objVx*objVx+objVy*objVy);
+  document.getElementById('r-vel').textContent = speed.toFixed(2);
+  document.getElementById('r-acc').textContent = acc.toFixed(2);
+
+  // Grid strain: measure average displacement of nearby grid points
+  let strain = 0;
+  const testR = 80;
+  let nTest = 0;
+  for (let a = 0; a < TAU; a += 0.5) {
+    const gx = objX + Math.cos(a)*testR;
+    const gy = objY + Math.sin(a)*testR;
+    const p = getGridPoint(gx, gy, objX, objY, objVx, objVy, acc, mass);
+    const dx = p.x - gx, dy = p.y - gy;
+    strain += Math.sqrt(dx*dx+dy*dy);
+    nTest++;
+  }
+  strain /= nTest;
+  document.getElementById('r-strain').textContent = strain.toFixed(2);
+
+  // Frame drag
+  const drag = mode === 'kintsugi' ? speed * mass * 0.1 : mode === 'mach' ? speed * 0.05 : 0;
+  document.getElementById('r-drag').textContent = drag.toFixed(2);
+}
+
+function loop() {
+  animT += 0.016;
+  physics();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ── CONTROLS ──
+document.getElementById('mass-slider').addEventListener('input', e => {
+  mass = parseFloat(e.target.value);
+  document.getElementById('mass-val').textContent = mass.toFixed(1);
+});
+document.getElementById('thrust-slider').addEventListener('input', e => {
+  thrust = parseFloat(e.target.value);
+  document.getElementById('thrust-val').textContent = thrust.toFixed(1);
+});
+document.getElementById('grid-slider').addEventListener('input', e => {
+  gridN = parseInt(e.target.value);
+  document.getElementById('grid-val').textContent = gridN;
+});
+
+function setMode(m) {
+  mode = m;
+  ['newton','mach','kintsugi'].forEach(id => {
+    document.getElementById('btn-' + id).classList.toggle('active', id === m);
+  });
+}
+document.getElementById('btn-newton').addEventListener('click', () => setMode('newton'));
+document.getElementById('btn-mach').addEventListener('click', () => setMode('mach'));
+document.getElementById('btn-kintsugi').addEventListener('click', () => setMode('kintsugi'));
+document.getElementById('btn-reset').addEventListener('click', () => {
+  objX = W * 0.35; objY = H * 0.5; objVx = 0; objVy = 0;
+  thrust = 0;
+  document.getElementById('thrust-slider').value = 0;
+  document.getElementById('thrust-val').textContent = '0.0';
+});
+
+// Click mass to toggle well
+cv.addEventListener('click', e => {
+  const rect = cv.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width * W;
+  const my = (e.clientY - rect.top) / rect.height * H;
+  const dx = mx - objX, dy = my - objY;
+  if (dx*dx+dy*dy < 900) showWell = !showWell;
+});
+
+// ── PHYSICISTS ──
+const PHYS = [
+  {name:'Isaac Newton', dates:'1643–1727', text:'Defined inertia as resistance to change in motion (First Law). Required absolute space as the reference frame — philosophically unsatisfying, physically effective. His bucket argument remains the clearest statement of the problem.', k:'Newton identified the phenomenon correctly. He required a metaphysical entity (absolute space) to explain it. That entity is the golden seam.'},
+  {name:'Ernst Mach', dates:'1838–1916', text:'Argued that inertia must arise from the relationship between a body and the distant matter of the universe. Rejected absolute space entirely. Inspired Einstein\'s development of general relativity.', k:'Mach\'s principle points to the field as the reference frame, not the stars specifically. The distant matter shapes the field; the field produces the inertia.'},
+  {name:'Albert Einstein', dates:'1879–1955', text:'General relativity partially implements Mach\'s principle: the metric (spacetime geometry) is determined by the matter-energy distribution. Frame-dragging — the Lense-Thirring effect — confirms that rotating mass drags spacetime.', k:'Frame-dragging is inertia made visible. GR shows the mechanism; Kintsugi Physics proposes the topology: frozen field configurations resist acceleration because they are coupled to the surrounding field.'},
+  {name:'Kintsugi Physics', dates:'2024–', text:'Proposes that inertia is translational frame-dragging: a frozen topological field configuration (Module 02) coupled to the surrounding field resists acceleration because moving the configuration requires deforming the field around it.', k:'Inertia is not a property of mass. It is a property of the coupling between a frozen topology and its surrounding field. The field\'s stiffness IS the inertial mass.'},
+];
+const pg = document.getElementById('physGrid');
+PHYS.forEach(p => {
+  const c = document.createElement('div'); c.className='ph-card';
+  c.innerHTML=`<div class="ph-name">${p.name}</div><div class="ph-dates">${p.dates}</div><div class="ph-text">${p.text}</div><div class="ph-kintsugi">${p.k}</div>`;
+  pg.appendChild(c);
+});
+
+// ── START ──
+loop();
+</script>
+</body>
+</html>

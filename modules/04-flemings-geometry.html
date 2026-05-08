@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 04: Fleming's Geometry</title>
+<style>
+:root{--black:#04050a;--deep:#08090f;--surf:#0f1018;--surf2:#161822;
+--gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.25);
+--text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+--blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;--green:#6aad70;
+--serif:Georgia,'Times New Roman',serif;--sans:'Trebuchet MS',system-ui,sans-serif;--mono:'Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+.mod-header{padding:2.5rem 2rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.08);max-width:1100px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.75rem}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;color:var(--bright)}
+h1 em{font-style:italic;color:var(--gold2)}
+.provocation{font-family:var(--serif);font-style:italic;color:var(--text2);font-size:1rem;margin-top:.5rem}
+
+/* ── SCALE SELECTOR ── */
+.scale-section{max-width:1100px;margin:0 auto;padding:1.5rem 2rem}
+.scale-track{position:relative;display:flex;align-items:center;gap:0;margin:1rem 0}
+.scale-line{flex:1;height:2px;background:linear-gradient(90deg,var(--coral),var(--gold),var(--blue),var(--teal),var(--violet));border-radius:1px}
+.scale-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.55rem;color:var(--text2);letter-spacing:.1em;margin-top:.25rem}
+.scale-btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.75rem}
+.scale-btn{padding:.45rem .9rem;background:none;border:1px solid rgba(201,168,76,.15);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.scale-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.scale-btn.active{background:rgba(201,168,76,.12);border-color:var(--gold-dim);color:var(--gold2)}
+
+/* ── MAIN LAYOUT ── */
+.main-layout{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1100px;margin:0 auto;min-height:60vh}
+@media(max-width:800px){.main-layout{grid-template-columns:1fr}}
+
+.vis-col{padding:1.5rem;background:var(--deep);border-right:1px solid rgba(201,168,76,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px}
+@media(max-width:800px){.vis-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.08)}}
+.vis-col canvas{display:block}
+
+.explain-col{padding:2rem 2.5rem;display:flex;flex-direction:column;justify-content:center}
+.explain-title{font-family:var(--serif);font-size:1.5rem;font-weight:400;color:var(--bright);margin-bottom:.4rem;line-height:1.3}
+.explain-title em{font-style:italic;color:var(--gold2)}
+.explain-subtitle{font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;color:var(--text2);text-transform:uppercase;margin-bottom:1rem}
+.explain-body{font-size:.9rem;color:var(--text);line-height:1.85;max-width:50ch}
+.explain-body em{font-style:italic;color:var(--bright)}
+.explain-body strong{font-weight:400;color:var(--gold2)}
+.explain-body p{margin-bottom:.8rem}
+.explain-equation{font-family:var(--mono);font-size:1.1rem;color:var(--teal);text-align:center;padding:1rem;margin:1rem 0;background:rgba(77,168,160,.06);border-radius:6px;border:1px solid rgba(77,168,160,.15);letter-spacing:.05em}
+.kintsugi-box{background:rgba(201,168,76,.05);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:1rem 1.25rem;margin:1rem 0}
+.kintsugi-box p{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--bright);margin:0;line-height:1.7}
+
+/* ── CHIRALITY MIRROR ── */
+.mirror-section{max-width:1100px;margin:0 auto;padding:2.5rem 2rem;border-top:1px solid rgba(201,168,76,.08)}
+.section-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.section-title{font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--bright);margin-bottom:.5rem}
+.section-sub{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem;max-width:60ch;line-height:1.7}
+.mirror-layout{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center}
+@media(max-width:700px){.mirror-layout{grid-template-columns:1fr;text-align:center}}
+.mirror-half{text-align:center}
+.mirror-half canvas{display:block;margin:0 auto}
+.mirror-label{font-family:var(--mono);font-size:.65rem;letter-spacing:.2em;color:var(--text2);text-transform:uppercase;margin-top:.75rem}
+.mirror-divider{width:2px;height:200px;background:linear-gradient(180deg,transparent,var(--gold),transparent);position:relative}
+.mirror-divider::after{content:'MIRROR';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-90deg);font-family:var(--mono);font-size:.55rem;letter-spacing:.3em;color:var(--gold-dim);white-space:nowrap;background:var(--black);padding:4px 8px}
+
+/* ── NARRATIVE ── */
+.narrative-section{max-width:1100px;margin:0 auto;padding:2.5rem 2rem;border-top:1px solid rgba(201,168,76,.08)}
+.narr-stage{padding:1.5rem 0;border-bottom:1px solid rgba(201,168,76,.05)}
+.narr-stage:last-child{border:none}
+.stage-num{font-family:var(--mono);font-size:.6rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.6rem}
+.narr-stage h2{font-family:var(--serif);font-size:clamp(1.1rem,2vw,1.4rem);font-weight:400;color:var(--bright);margin-bottom:.8rem;line-height:1.3}
+.narr-stage h2 em{font-style:italic;color:var(--gold2)}
+.narr-stage p{font-size:.88rem;line-height:1.8;color:var(--text);max-width:60ch;margin-bottom:.7rem}
+
+/* ── PHYSICISTS + NAV ── */
+.physicist-section{padding:2rem;max-width:1100px;margin:0 auto}
+.physicist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin-top:1rem}
+.ph-card{background:var(--surf2);border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.25rem}
+.ph-name{font-family:var(--serif);font-size:1rem;color:var(--gold2);margin-bottom:.15rem}
+.ph-dates{font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.15em;margin-bottom:.5rem}
+.ph-text{font-size:.78rem;color:var(--text);line-height:1.6}
+.ph-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--teal);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.15)}
+.module-nav{display:flex;justify-content:space-between;padding:2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08);font-family:var(--mono);font-size:.7rem}
+.module-nav a{color:var(--text2);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:1px}
+.module-nav a:hover{color:var(--gold2)}
+</style>
+</head>
+<body>
+
+<div class="mod-header">
+  <div class="eyebrow">Kintsugi Physics · Module 04 of VII</div>
+  <h1>Fleming's <em>Geometry</em></h1>
+  <div class="provocation">The universe is left-handed. Nobody fully knows why. The same geometric twist appears at every scale.</div>
+</div>
+
+<!-- SCALE SELECTOR -->
+<div class="scale-section">
+  <div class="scale-track"><div class="scale-line"></div></div>
+  <div class="scale-labels"><span>10⁻¹⁸ m · quarks</span><span>10⁻¹⁰ m · atoms</span><span>10⁻² m · wires</span><span>10⁶ m · planets</span><span>10²⁶ m · cosmos</span></div>
+  <div class="scale-btns" id="scaleBtns"></div>
+</div>
+
+<!-- MAIN: VIS + EXPLANATION -->
+<div class="main-layout">
+  <div class="vis-col">
+    <canvas id="cv" width="500" height="420"></canvas>
+  </div>
+  <div class="explain-col" id="explainCol"></div>
+</div>
+
+<!-- CHIRALITY MIRROR -->
+<div class="mirror-section">
+  <div class="section-eyebrow">The parity experiment</div>
+  <div class="section-title">Look in the mirror. The universe doesn't.</div>
+  <div class="section-sub">In 1957, Chien-Shiung Wu showed that cobalt-60 beta decay violates parity — the weak force distinguishes left from right. This was the most shocking experimental result of the twentieth century. The universe has a handedness.</div>
+  <div class="mirror-layout">
+    <div class="mirror-half">
+      <canvas id="cvLeft" width="200" height="200"></canvas>
+      <div class="mirror-label">Our universe</div>
+    </div>
+    <div class="mirror-divider"></div>
+    <div class="mirror-half">
+      <canvas id="cvRight" width="200" height="200"></canvas>
+      <div class="mirror-label">Mirror universe</div>
+    </div>
+  </div>
+</div>
+
+<!-- NARRATIVE -->
+<div class="narrative-section">
+  <div class="narr-stage">
+    <div class="stage-num">The golden seam</div>
+    <h2>Why does the cross product<br><em>choose a direction?</em></h2>
+    <p>The cross product of two vectors produces a third vector perpendicular to both. But <em>which</em> perpendicular? There are always two choices — up or down, left or right. The right-hand rule picks one. It's a convention. Or is it?</p>
+    <p>If it were merely a convention, the universe wouldn't care. Both hands would give identical physics. But the weak nuclear force <em>does</em> care. It only couples to left-handed particles. The universe has baked the right-hand rule into its fundamental interactions.</p>
+  </div>
+  <div class="narr-stage">
+    <div class="stage-num">Kintsugi interpretation</div>
+    <h2>Chirality as<br><em>topological orientation</em></h2>
+    <p>In Kintsugi Physics, the universe's handedness isn't arbitrary — it's a <em>topological property of the field manifold</em>. Just as a Mobius strip has a definite twist that cannot be removed by smooth deformation, the quantum field manifold has an orientation.</p>
+    <p>The cross product, Fleming's rules, magnetic handedness, parity violation, the helicity of neutrinos — these are all manifestations of the same underlying geometric fact: the field topology is oriented. The universe chose a chirality when it froze (Module 02), and that choice is now permanent.</p>
+    <div class="kintsugi-box"><p>"Fleming's left-hand rule in your schoolroom is not a mnemonic. It is a direct observation of the topological orientation of the quantum vacuum. The classroom was always closer to fundamental physics than the textbook admitted."</p></div>
+  </div>
+</div>
+
+<!-- PHYSICISTS -->
+<div class="physicist-section">
+  <div class="section-eyebrow">Voices behind this seam</div>
+  <div class="physicist-grid" id="physGrid"></div>
+</div>
+
+<div class="module-nav">
+  <a href="02-frozen-universe.html">← Module 02: The Frozen Universe</a>
+  <a href="03-keplers-ghosts.html">← Module 03: Kepler's Ghosts</a>
+  <a href="05-inertia-local-space.html">Module 05: Inertia as Local Space →</a>
+</div>
+
+<script>
+const TAU = Math.PI * 2;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// ═══════════════════════════
+// SCALE DATA
+// ═══════════════════════════
+const SCALES = [
+  { id:'classroom', label:'Classroom · Wire', color:'#c4714a',
+    title:'Fleming\'s <em>Left-Hand Rule</em>',
+    subtitle:'The motor effect · electromagnetic force on a current',
+    equation:'F = I L × B',
+    body:`<p>Hold your left hand with thumb, forefinger, and middle finger at right angles. The <strong>forefinger</strong> points along the magnetic field (B). The <strong>middle finger</strong> points along the current (I). The <strong>thumb</strong> gives the direction of the force (F).</p>
+<p>This is the motor effect — the force that spins every electric motor on Earth. The geometry is a <em>cross product</em>: force equals current crossed with magnetic field. The direction is fixed by the handedness of the cross product.</p>
+<p>Every physics student learns this. Almost none are told that this same geometric relationship — the same handedness, the same perpendicularity — operates identically at every scale in the universe.</p>`,
+    draw: drawClassroom
+  },
+  { id:'atomic', label:'Atomic · Electron Spin', color:'#5b8abf',
+    title:'Electron <em>Spin</em>',
+    subtitle:'Intrinsic angular momentum · magnetic moment alignment',
+    equation:'μ = −g (e/2mₑ) S',
+    body:`<p>An electron has intrinsic angular momentum — spin — even though it isn't literally rotating. This spin creates a magnetic moment. The relationship between spin direction and magnetic moment direction follows the same geometric rule as Fleming: a cross-product relationship with a fixed handedness.</p>
+<p>The electron's gyromagnetic ratio (g ≈ 2.002) is one of the most precisely measured quantities in physics — predicted by quantum electrodynamics to 12 decimal places. The geometry is exact.</p>
+<p>Spin-up and spin-down are not symmetric descriptions. The universe <em>knows</em> which is which, because the weak force couples only to left-handed electrons.</p>`,
+    draw: drawAtomic
+  },
+  { id:'nuclear', label:'Nuclear · Beta Decay', color:'#e8c97a',
+    title:'Parity <em>Violation</em>',
+    subtitle:'Wu experiment 1957 · the weak force is left-handed',
+    equation:'Only ν_L and ν̄_R exist',
+    body:`<p>In 1957, Chien-Shiung Wu aligned cobalt-60 nuclei in a magnetic field and watched which direction the beta-decay electrons came out. If parity were conserved — if the universe didn't distinguish left from right — electrons would emerge equally in both directions.</p>
+<p>They didn't. <em>The electrons came out preferentially opposite to the nuclear spin direction.</em> The weak nuclear force violates parity — maximally. Neutrinos are always left-handed. Antineutrinos are always right-handed. There is no right-handed neutrino.</p>
+<p>This was so shocking that Wolfgang Pauli initially refused to believe it. "I cannot believe God is a weak left-hander," he wrote. But the universe, it turned out, is exactly that.</p>`,
+    draw: drawNuclear
+  },
+  { id:'galactic', label:'Galactic · Magnetic Fields', color:'#4da8a0',
+    title:'Cosmic <em>Magnetic Geometry</em>',
+    subtitle:'Galactic magnetic fields · same handedness, 10²⁰ scale-up',
+    equation:'∇ × B = μ₀ J + μ₀ ε₀ ∂E/∂t',
+    body:`<p>Galaxies have magnetic fields spanning tens of thousands of light-years. These fields follow the same Maxwell equations — the same cross-product geometry — as the wire in your classroom. The curl of B (a cross product in differential form) equals the current density.</p>
+<p>The scale has changed by a factor of 10²⁰. The geometry has not changed at all. This is not a coincidence. It is a statement about the topology of the universe: the cross-product orientation is <em>global</em>, not local.</p>
+<p>A left-hand rule that works for a copper wire also works for a magnetar. The universe has one handedness, end to end.</p>`,
+    draw: drawGalactic
+  },
+  { id:'quantum', label:'Quantum · Field Topology', color:'#8875c4',
+    title:'Topological <em>Orientation</em>',
+    subtitle:'Kintsugi Physics · chirality as frozen field geometry',
+    equation:'χ = ∫ F ∧ F ≠ 0',
+    body:`<p>In Kintsugi Physics, the universe's chirality is a <strong>topological invariant</strong> of the field manifold. Just as a knot has a definite handedness that cannot be changed without cutting it, the quantum vacuum has an orientation that was fixed at the moment of symmetry breaking.</p>
+<p>The Chern-Simons invariant (χ) measures this topological handedness. It is non-zero in our universe. A mirror universe would have −χ. Both are mathematically possible. Ours chose one.</p>
+<p>Every instance of Fleming's rule, every parity violation, every neutrino helicity — all are downstream consequences of this single topological fact: the vacuum is oriented.</p>`,
+    draw: drawQuantum
+  },
+];
+
+let currentScale = 0;
+let animT = 0;
+
+// ── DRAW FUNCTIONS ──
+
+function arrow(ctx, x1, y1, x2, y2, color, width, label, labelOff) {
+  const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+  const ux=dx/len, uy=dy/len;
+  ctx.beginPath();
+  ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.stroke();
+  // arrowhead
+  const hl=10, hw=5;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-ux*hl+uy*hw, y2-uy*hl-ux*hw);
+  ctx.lineTo(x2-ux*hl-uy*hw, y2-uy*hl+ux*hw);
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  if(label){
+    ctx.font='12px Courier New'; ctx.fillStyle=color;
+    ctx.fillText(label, x2+(labelOff?labelOff[0]:5), y2+(labelOff?labelOff[1]:-5));
+  }
+}
+
+function drawClassroom() {
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // Wire
+  ctx.beginPath(); ctx.moveTo(cx-150,cy); ctx.lineTo(cx+150,cy);
+  ctx.strokeStyle='#555'; ctx.lineWidth=6; ctx.lineCap='round'; ctx.stroke();
+  // Current arrow (middle finger)
+  const pulse = Math.sin(animT*2)*0.15+0.85;
+  arrow(ctx, cx-80,cy, cx+80,cy, `rgba(232,201,122,${pulse})`, 2.5, 'I (current)', [5,18]);
+  // B field arrows (forefinger) — into page, shown as circles
+  for(let i=-2;i<=2;i++){
+    const bx=cx+i*50, by=cy-70;
+    ctx.beginPath(); ctx.arc(bx,by,8,0,TAU);
+    ctx.strokeStyle='rgba(91,138,191,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+    // X mark for "into page"
+    ctx.beginPath(); ctx.moveTo(bx-4,by-4); ctx.lineTo(bx+4,by+4);
+    ctx.moveTo(bx+4,by-4); ctx.lineTo(bx-4,by+4);
+    ctx.strokeStyle='rgba(91,138,191,0.7)'; ctx.lineWidth=1; ctx.stroke();
+  }
+  ctx.font='12px Courier New'; ctx.fillStyle='rgba(91,138,191,0.7)';
+  ctx.fillText('B (field, into page)', cx+30, cy-85);
+  // Force arrow (thumb) — upward
+  const fPulse = Math.sin(animT*3)*8;
+  arrow(ctx, cx,cy-10, cx,cy-100+fPulse, '#c4714a', 3, 'F (force)', [8,0]);
+  // Hand guide
+  ctx.font='11px Georgia'; ctx.fillStyle='rgba(201,168,76,0.5)';
+  ctx.textAlign='center';
+  ctx.fillText('Thumb ↑ Force  ·  Forefinger ⊗ Field  ·  Middle → Current', cx, cy+60);
+  ctx.textAlign='left';
+  // Golden cross-product symbol
+  ctx.font='bold 16px Courier New'; ctx.fillStyle='rgba(201,168,76,0.6)';
+  ctx.fillText('F = IL × B', cx-45, cy+100);
+}
+
+function drawAtomic() {
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // Electron orbit
+  for(let r=60;r<=140;r+=40){
+    ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.35,0,0,TAU);
+    ctx.strokeStyle=`rgba(91,138,191,${0.15})`; ctx.lineWidth=1; ctx.stroke();
+  }
+  // Nucleus
+  ctx.beginPath(); ctx.arc(cx,cy,8,0,TAU);
+  ctx.fillStyle='rgba(201,168,76,0.6)'; ctx.fill();
+  // Electron
+  const eAngle = animT * 1.5;
+  const ex = cx + Math.cos(eAngle)*100;
+  const ey = cy + Math.sin(eAngle)*35;
+  ctx.beginPath(); ctx.arc(ex,ey,5,0,TAU);
+  ctx.fillStyle='#5b8abf'; ctx.fill();
+  ctx.beginPath(); ctx.arc(ex,ey,8,0,TAU);
+  ctx.strokeStyle='rgba(91,138,191,0.3)'; ctx.lineWidth=1; ctx.stroke();
+  // Spin arrow
+  arrow(ctx, cx,cy-20, cx,cy-90, '#e8c97a', 2, 'S (spin)', [8,0]);
+  // Magnetic moment arrow (opposite to spin for electron)
+  arrow(ctx, cx,cy+20, cx,cy+90, '#c4714a', 2, 'μ (moment)', [8,5]);
+  // Label
+  ctx.font='11px Georgia'; ctx.fillStyle='rgba(201,168,76,0.5)';
+  ctx.textAlign='center';
+  ctx.fillText('Spin ↑ and magnetic moment ↓ — opposite by convention, same cross-product geometry', cx, cy+150);
+  ctx.textAlign='left';
+}
+
+function drawNuclear() {
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // Cobalt-60 nucleus
+  ctx.beginPath(); ctx.arc(cx,cy,30,0,TAU);
+  const grad = ctx.createRadialGradient(cx,cy,5,cx,cy,30);
+  grad.addColorStop(0,'rgba(201,168,76,0.5)'); grad.addColorStop(1,'rgba(201,168,76,0.1)');
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.strokeStyle='rgba(201,168,76,0.3)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.font='12px Courier New'; ctx.fillStyle='rgba(201,168,76,0.8)';
+  ctx.textAlign='center'; ctx.fillText('⁶⁰Co', cx, cy+4);
+  // Nuclear spin arrow
+  arrow(ctx, cx,cy-35, cx,cy-100, '#5b8abf', 2.5, 'J (nuclear spin)', [8,0]);
+  // Beta electrons — preferentially downward (opposite to spin)
+  const nElectrons = 8;
+  for(let i=0;i<nElectrons;i++){
+    const angle = (i/nElectrons)*TAU + animT*0.5;
+    // Bias downward: more electrons go opposite to spin
+    const bias = (i < nElectrons*0.7) ? 1 : -0.5;
+    const dist = 50 + (animT*30 + i*20) % 130;
+    const spread = (i < nElectrons*0.7) ? 0.3 : 0.8;
+    const bx = cx + Math.sin(angle)*spread*dist*0.4;
+    const by = cy + 35 + dist*bias*0.7;
+    if(by > cy-80 && by < H-20){
+      const alpha = Math.max(0.1, 1 - dist/180);
+      ctx.beginPath(); ctx.arc(bx,by,2.5,0,TAU);
+      ctx.fillStyle=`rgba(196,113,74,${alpha})`; ctx.fill();
+    }
+  }
+  // Asymmetry label
+  ctx.font='11px Georgia'; ctx.fillStyle='rgba(196,113,74,0.7)';
+  ctx.fillText('More electrons emitted opposite to spin', cx, H-40);
+  ctx.font='10px Courier New'; ctx.fillStyle='rgba(201,168,76,0.4)';
+  ctx.fillText('Parity violated — the weak force is LEFT-HANDED', cx, H-20);
+  ctx.textAlign='left';
+}
+
+function drawGalactic() {
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // Galaxy spiral
+  ctx.globalAlpha=0.15;
+  for(let arm=0;arm<3;arm++){
+    ctx.beginPath();
+    const aOff = arm * TAU/3;
+    for(let t=0;t<TAU*2;t+=0.02){
+      const r = 20 + t*30;
+      const a = t + aOff + animT*0.2;
+      const x = cx + Math.cos(a)*r*0.9;
+      const y = cy + Math.sin(a)*r*0.35;
+      t===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle='#4da8a0'; ctx.lineWidth=8; ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  // Magnetic field lines
+  for(let ring=1;ring<=4;ring++){
+    const r = ring*42;
+    ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.38,0,0,TAU);
+    ctx.strokeStyle=`rgba(91,138,191,${0.3-ring*0.05})`; ctx.lineWidth=1; ctx.setLineDash([4,6]); ctx.stroke();
+    ctx.setLineDash([]);
+    // Direction arrows on field lines
+    const nArr = 4 + ring*2;
+    for(let i=0;i<nArr;i++){
+      const a = (i/nArr)*TAU + animT*0.3;
+      const ax=cx+Math.cos(a)*r*0.9, ay=cy+Math.sin(a)*r*0.38;
+      const tx=-Math.sin(a)*5, ty=Math.cos(a)*2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax+tx,ay+ty);
+      ctx.strokeStyle=`rgba(91,138,191,${0.4})`; ctx.lineWidth=1.5; ctx.stroke();
+    }
+  }
+  // Center bulge
+  ctx.beginPath(); ctx.arc(cx,cy,12,0,TAU);
+  ctx.fillStyle='rgba(201,168,76,0.3)'; ctx.fill();
+  // Label
+  ctx.font='11px Georgia'; ctx.fillStyle='rgba(77,168,160,0.6)';
+  ctx.textAlign='center';
+  ctx.fillText('Galactic magnetic field · same ∇×B = μ₀J · same handedness · 10²⁰× scale', cx, H-25);
+  ctx.textAlign='left';
+}
+
+function drawQuantum() {
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2;
+  // Topological manifold visualization — a twisted torus
+  const R=110, r=40;
+  for(let u=0;u<TAU;u+=0.08){
+    for(let v=0;v<TAU;v+=0.15){
+      const twist = u*0.5 + animT*0.3; // chirality = twist
+      const x = (R + r*Math.cos(v+twist))*Math.cos(u);
+      const y = (R + r*Math.cos(v+twist))*Math.sin(u)*0.4;
+      const z = r*Math.sin(v+twist);
+      const fov=5, p=fov/(fov+z*0.01+y*0.005);
+      const sx=cx+x*p*0.7, sy=cy+y*p*0.7-z*p*0.4;
+      const depth = Math.max(0.05, 0.5+z*0.01);
+      const hue = ((v+twist)/TAU*360+180)%360;
+      ctx.beginPath(); ctx.arc(sx,sy,1.5*p,0,TAU);
+      ctx.fillStyle=`hsla(${hue},60%,50%,${depth})`; ctx.fill();
+    }
+  }
+  // Gold seam along twist
+  ctx.beginPath();
+  for(let u=0;u<TAU;u+=0.03){
+    const twist = u*0.5 + animT*0.3;
+    const x = (R+r)*Math.cos(u);
+    const y = (R+r)*Math.sin(u)*0.4;
+    const fov=5,p=fov/(fov+y*0.005);
+    const sx=cx+x*p*0.7, sy=cy+y*p*0.7;
+    u===0?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy);
+  }
+  ctx.strokeStyle='rgba(201,168,76,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
+  // Labels
+  ctx.font='11px Georgia'; ctx.fillStyle='rgba(136,117,196,0.6)';
+  ctx.textAlign='center';
+  ctx.fillText('Topological orientation of the vacuum — chirality frozen at symmetry breaking', cx, H-25);
+  ctx.font='10px Courier New'; ctx.fillStyle='rgba(201,168,76,0.4)';
+  ctx.fillText('The twist cannot be removed. The universe is oriented.', cx, H-8);
+  ctx.textAlign='left';
+}
+
+// ── CHIRALITY MIRROR ──
+const cvL = document.getElementById('cvLeft');
+const cvR = document.getElementById('cvRight');
+const ctxL = cvL.getContext('2d');
+const ctxR = cvR.getContext('2d');
+
+function drawMirror() {
+  const s=200, c=100;
+  [ctxL,ctxR].forEach(ct => ct.clearRect(0,0,s,s));
+  // Left: normal cross product (right-hand rule)
+  // A = right, B = up, A×B = out of screen
+  ctxL.save(); ctxR.save();
+  // Axes
+  arrow(ctxL,30,c,170,c,'#5b8abf',2,'A',[2,-8]);
+  arrow(ctxL,c,170,c,30,'#c4714a',2,'B',[-20,0]);
+  // A×B dot (out of page)
+  ctxL.beginPath(); ctxL.arc(c,c,10,0,TAU);
+  ctxL.strokeStyle='#e8c97a'; ctxL.lineWidth=1.5; ctxL.stroke();
+  ctxL.beginPath(); ctxL.arc(c,c,2,0,TAU);
+  ctxL.fillStyle='#e8c97a'; ctxL.fill();
+  ctxL.font='10px Courier New'; ctxL.fillStyle='#e8c97a';
+  ctxL.fillText('A×B ⊙', c+15, c-15);
+
+  // Right: mirror — A reverses, B same, cross product reverses
+  arrow(ctxR,170,c,30,c,'#5b8abf',2,'A',[2,-8]);
+  arrow(ctxR,c,170,c,30,'#c4714a',2,'B',[-20,0]);
+  // A×B cross (into page)
+  ctxR.beginPath(); ctxR.arc(c,c,10,0,TAU);
+  ctxR.strokeStyle='rgba(232,201,122,0.5)'; ctxR.lineWidth=1.5; ctxR.stroke();
+  ctxR.beginPath(); ctxR.moveTo(c-5,c-5); ctxR.lineTo(c+5,c+5);
+  ctxR.moveTo(c+5,c-5); ctxR.lineTo(c-5,c+5);
+  ctxR.strokeStyle='rgba(232,201,122,0.5)'; ctxR.lineWidth=1.5; ctxR.stroke();
+  ctxR.font='10px Courier New'; ctxR.fillStyle='rgba(232,201,122,0.5)';
+  ctxR.fillText('A×B ⊗', c+15, c-15);
+
+  // Weak force label
+  ctxL.font='9px Courier New'; ctxL.fillStyle='rgba(106,173,112,0.7)';
+  ctxL.fillText('Weak force: YES', 45, 190);
+  ctxR.font='9px Courier New'; ctxR.fillStyle='rgba(196,113,74,0.5)';
+  ctxR.fillText('Weak force: NO', 50, 190);
+
+  ctxL.restore(); ctxR.restore();
+}
+
+// ── SCALE BUTTONS + RENDERING ──
+const btnContainer = document.getElementById('scaleBtns');
+SCALES.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'scale-btn' + (i===0?' active':'');
+  btn.textContent = s.label;
+  btn.style.setProperty('--c', s.color);
+  btn.addEventListener('click', () => {
+    currentScale = i;
+    document.querySelectorAll('.scale-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    updateExplanation();
+  });
+  btnContainer.appendChild(btn);
+});
+
+function updateExplanation() {
+  const s = SCALES[currentScale];
+  document.getElementById('explainCol').innerHTML = `
+    <div class="explain-subtitle" style="color:${s.color}">${s.subtitle}</div>
+    <div class="explain-title">${s.title}</div>
+    <div class="explain-equation">${s.equation}</div>
+    <div class="explain-body">${s.body}</div>
+  `;
+}
+
+function animate() {
+  animT += 0.02;
+  SCALES[currentScale].draw();
+  requestAnimationFrame(animate);
+}
+
+// ── PHYSICISTS ──
+const PHYS = [
+  {name:'John Ambrose Fleming', dates:'1849–1945', text:'Invented the hand rules for electromagnetic force directions — mnemonics that encode the cross-product geometry. Left hand for motors (force on current), right hand for dynamos (induced current).', k:'Not a mnemonic. A direct physical observation of the vacuum\'s topological orientation, made accessible by a Victorian engineer.'},
+  {name:'James Clerk Maxwell', dates:'1831–1879', text:'Unified electricity, magnetism, and light into four equations. The curl operations (∇×) in Maxwell\'s equations are cross products — each one embedding the universe\'s handedness.', k:'Maxwell\'s equations are geometry. The curl is a cross product. The cross product has a handedness. That handedness is not a convention — it is physics.'},
+  {name:'Chien-Shiung Wu', dates:'1912–1997', text:'Designed and executed the experiment that proved parity violation in weak interactions (1957). Used polarised cobalt-60 beta decay. The most important experimental physicist most people have never heard of.', k:'She proved the universe is oriented. The golden seam: the weak force distinguishes left from right. Geometry is not symmetric.'},
+  {name:'Paul Dirac', dates:'1902–1984', text:'Predicted antimatter from the geometry of his equation. The Dirac equation naturally produces two chiralities — left-handed and right-handed — and the weak force couples only to one. Chirality is built into the spinor structure of spacetime.', k:'Dirac\'s equation is geometry all the way down. Spinors are not abstract algebra — they are the mathematical description of oriented topology.'},
+];
+const pg = document.getElementById('physGrid');
+PHYS.forEach(p => {
+  const c = document.createElement('div'); c.className='ph-card';
+  c.innerHTML=`<div class="ph-name">${p.name}</div><div class="ph-dates">${p.dates}</div><div class="ph-text">${p.text}</div><div class="ph-kintsugi">${p.k}</div>`;
+  pg.appendChild(c);
+});
+
+// ── INIT ──
+updateExplanation();
+drawMirror();
+animate();
+</script>
+</body>
+</html>

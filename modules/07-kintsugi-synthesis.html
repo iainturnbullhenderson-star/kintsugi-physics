@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 07: The Kintsugi Synthesis</title>
+<style>
+:root{--black:#04050a;--deep:#08090f;--surf:#0f1018;--surf2:#161822;
+--gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.25);
+--text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+--blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;
+--serif:Georgia,'Times New Roman',serif;--sans:'Trebuchet MS',system-ui,sans-serif;--mono:'Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+/* ── PERIPHERAL ── */
+.peripheral{position:fixed;width:3px;height:60vh;top:20vh;opacity:0;transition:opacity 2s;pointer-events:none;z-index:5}
+.peripheral.left{left:0}.peripheral.right{right:0}
+.peripheral.active{opacity:1}
+.p-inner{width:100%;height:100%;background:linear-gradient(180deg,transparent,var(--gold),transparent);animation:pCalm 3.4s ease-in-out infinite}
+@keyframes pCalm{0%,100%{opacity:.15;transform:scaleY(.9)}50%{opacity:.55;transform:scaleY(1)}}
+
+/* ── OPENING ── */
+.opening{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 2rem;position:relative}
+.bowl-container{position:relative;width:240px;height:240px;margin-bottom:3rem}
+.bowl-container svg{position:absolute;top:0;left:0;width:100%;height:100%}
+.opening-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.45em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:1.5rem}
+.opening h1{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);font-weight:300;color:var(--bright);line-height:1.15;margin-bottom:.75rem}
+.opening h1 em{font-style:italic;color:var(--gold2)}
+.opening .sub{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--text2);max-width:480px;margin-bottom:2rem}
+.gold-rule{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1.5rem auto}
+.scroll-hint{font-family:var(--mono);font-size:.6rem;letter-spacing:.3em;color:var(--text2);animation:nudge 2s ease-in-out infinite 3s}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* ── SEAM RECALL ── */
+.seam-recall{max-width:900px;margin:0 auto;padding:4rem 2rem}
+.recall-intro{text-align:center;margin-bottom:3rem}
+.recall-intro h2{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:var(--bright);margin-bottom:.5rem}
+.recall-intro h2 em{font-style:italic;color:var(--gold2)}
+.recall-intro p{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--text2);max-width:50ch;margin:.5rem auto 0}
+
+.seam-timeline{position:relative;padding-left:40px}
+.seam-timeline::before{content:'';position:absolute;left:16px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--gold),var(--gold),transparent)}
+
+.seam-node{position:relative;margin-bottom:3rem;opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+.seam-node.visible{opacity:1;transform:none}
+.seam-dot{position:absolute;left:-28px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--gold-dim);background:var(--black);transition:background .5s,border-color .5s}
+.seam-node.visible .seam-dot{background:var(--gold);border-color:var(--gold)}
+.seam-num{font-family:var(--mono);font-size:.55rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.4rem}
+.seam-title{font-family:var(--serif);font-size:1.15rem;color:var(--bright);margin-bottom:.3rem}
+.seam-thread{font-size:.85rem;color:var(--text);line-height:1.75;max-width:55ch}
+.seam-thread em{font-style:italic;color:var(--bright)}
+.seam-thread strong{font-weight:400;color:var(--gold2)}
+.seam-link{display:inline-block;margin-top:.4rem;font-family:var(--mono);font-size:.6rem;color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(77,168,160,.3);letter-spacing:.1em}
+.seam-link:hover{color:var(--gold2);border-color:var(--gold-dim)}
+
+/* ── THE ARGUMENT ── */
+.argument{max-width:700px;margin:0 auto;padding:4rem 2rem}
+.argument h2{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:var(--bright);text-align:center;margin-bottom:.5rem}
+.argument h2 em{font-style:italic;color:var(--gold2)}
+.argument .sub{font-family:var(--mono);font-size:.6rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;text-align:center;margin-bottom:2.5rem}
+
+.arg-step{margin-bottom:2rem;opacity:0;transform:translateY(12px);transition:opacity .7s ease,transform .7s ease}
+.arg-step.visible{opacity:1;transform:none}
+.arg-number{font-family:var(--serif);font-size:2.5rem;font-weight:300;color:var(--gold-dim);float:left;margin-right:1rem;margin-top:-.3rem;line-height:1}
+.arg-text{font-size:.95rem;color:var(--text);line-height:1.85;overflow:hidden}
+.arg-text em{font-style:italic;color:var(--bright)}
+.arg-text strong{font-weight:400;color:var(--gold2)}
+
+.arg-conclusion{text-align:center;padding:2.5rem 2rem;margin:2rem 0;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.12);border-radius:8px;opacity:0;transition:opacity 1.2s ease}
+.arg-conclusion.visible{opacity:1}
+.arg-conclusion p{font-family:var(--serif);font-size:1.2rem;font-style:italic;color:var(--bright);line-height:1.75;max-width:50ch;margin:0 auto}
+.arg-conclusion p strong{color:var(--gold2);font-weight:400}
+
+/* ── CONNECTIONS CANVAS ── */
+.connections-section{padding:3rem 2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08)}
+.connections-header{text-align:center;margin-bottom:1.5rem}
+.connections-header h2{font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--bright)}
+.connections-header p{font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.2em;margin-top:.3rem}
+.canvas-wrap{width:100%;max-width:800px;margin:0 auto;aspect-ratio:16/10;background:var(--deep);border-radius:8px;border:1px solid rgba(201,168,76,.1);overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+
+/* ── WHAT REMAINS ── */
+.remains{max-width:700px;margin:0 auto;padding:4rem 2rem}
+.remains h2{font-family:var(--serif);font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:400;color:var(--bright);margin-bottom:1.5rem;text-align:center}
+.remains h2 em{font-style:italic;color:var(--gold2)}
+.remains-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:600px){.remains-grid{grid-template-columns:1fr}}
+.remains-card{background:var(--surf2);border:1px solid rgba(201,168,76,.1);border-radius:8px;padding:1.25rem}
+.remains-label{font-family:var(--mono);font-size:.55rem;letter-spacing:.3em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.4rem}
+.remains-q{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--bright);margin-bottom:.4rem;line-height:1.5}
+.remains-body{font-size:.8rem;color:var(--text);line-height:1.6}
+
+/* ── CLOSING ── */
+.closing{text-align:center;padding:5rem 2rem;position:relative}
+.closing-bowl{width:160px;height:160px;margin:0 auto 2rem;position:relative}
+.closing-bowl svg{width:100%;height:100%}
+.closing h2{font-family:var(--serif);font-size:clamp(1.3rem,3vw,1.8rem);font-weight:300;color:var(--bright);margin-bottom:1rem}
+.closing h2 em{font-style:italic;color:var(--gold2)}
+.closing p{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--text2);max-width:44ch;margin:.5rem auto;line-height:1.75}
+.closing .book-link{display:inline-block;margin-top:2rem;padding:.8rem 2rem;border:1px solid var(--gold-dim);border-radius:30px;color:var(--gold);text-decoration:none;font-family:var(--sans);font-size:.85rem;letter-spacing:.15em;transition:all .3s}
+.closing .book-link:hover{background:rgba(201,168,76,.1);border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.1)}
+.journey-nav{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:2rem}
+.journey-nav a{font-family:var(--mono);font-size:.6rem;color:var(--text2);text-decoration:none;padding:.35rem .7rem;border:1px solid rgba(201,168,76,.1);border-radius:4px;letter-spacing:.1em;transition:all .2s}
+.journey-nav a:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+.footer{text-align:center;padding:2rem;border-top:1px solid rgba(201,168,76,.06);font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.15em}
+</style>
+</head>
+<body>
+
+<div class="peripheral left" id="perL"><div class="p-inner"></div></div>
+<div class="peripheral right" id="perR"><div class="p-inner"></div></div>
+
+<!-- ═══ OPENING ═══ -->
+<div class="opening">
+  <div class="bowl-container">
+    <svg viewBox="0 0 240 240">
+      <!-- Bowl with gold seams -->
+      <ellipse cx="120" cy="160" rx="85" ry="25" fill="#1a1810" stroke="#3a3828" stroke-width="1"/>
+      <path d="M35 160 Q35 80 120 68 Q205 80 205 160" fill="#1a1810" stroke="#3a3828" stroke-width="1.5"/>
+      <ellipse cx="120" cy="68" rx="85" ry="16" fill="#1e1c14" stroke="#3a3828" stroke-width="1"/>
+      <!-- Gold seams with glow -->
+      <defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <g filter="url(#glow)" opacity="0.85">
+        <path d="M120 75 L108 105 L122 125 L100 155" fill="none" stroke="#e8c97a" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M135 80 L148 108 L134 128 L152 155" fill="none" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M90 92 L75 108 L88 130" fill="none" stroke="#c9a84c" stroke-width="1" stroke-linecap="round"/>
+        <path d="M122 125 L142 138" fill="none" stroke="#e8c97a" stroke-width="1" stroke-linecap="round"/>
+        <path d="M155 95 L165 115 L155 135" fill="none" stroke="#c9a84c" stroke-width=".8" stroke-linecap="round"/>
+        <path d="M75 108 L60 125" fill="none" stroke="#c9a84c" stroke-width=".7" stroke-linecap="round"/>
+      </g>
+      <!-- Gold dots at intersections -->
+      <circle cx="108" cy="105" r="2.5" fill="#e8c97a" opacity=".7"/>
+      <circle cx="122" cy="125" r="2" fill="#e8c97a" opacity=".6"/>
+      <circle cx="148" cy="108" r="2" fill="#c9a84c" opacity=".5"/>
+      <circle cx="75" cy="108" r="1.8" fill="#c9a84c" opacity=".5"/>
+      <!-- Breathing animation -->
+      <animateTransform attributeName="transform" type="scale" values="1;1.005;1" dur="3.4s" repeatCount="indefinite" additive="sum" xlink:href="#glow"/>
+    </svg>
+  </div>
+  <div class="opening-eyebrow">Kintsugi Physics · Module 07 of VII · Final Movement</div>
+  <h1>The <em>Kintsugi</em><br>Synthesis</h1>
+  <p class="sub">Six golden seams. One bowl. The fractures were never the problem — they were always the architecture.</p>
+  <div class="gold-rule"></div>
+  <div class="scroll-hint">↓ &nbsp; the bowl, reassembled &nbsp; ↓</div>
+</div>
+
+<!-- ═══ SEAM RECALL ═══ -->
+<div class="seam-recall">
+  <div class="recall-intro">
+    <h2>Six seams.<br><em>One argument.</em></h2>
+    <p>Each module found a crack in the standard picture. Together, they form a single coherent proposition about the nature of reality.</p>
+  </div>
+
+  <div class="seam-timeline" id="timeline">
+    <div class="seam-node" data-delay="0">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 01 · The Two Tables</div>
+      <div class="seam-title">The periodic table has a geometric order that Mendeleev's arrangement hides.</div>
+      <div class="seam-thread">Elements ordered by <strong>orbital subshell completion</strong> rather than atomic number reveal that the table is a geometric object — each column a family of identical spatial configurations. The chemistry is the same; the <em>geometry</em> is deeper. Janet saw it in 1928. The chemistry curriculum still hasn't noticed.</div>
+      <a class="seam-link" href="modules/01-two-tables.html">Revisit Module 01 →</a>
+    </div>
+
+    <div class="seam-node" data-delay="100">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 02 · The Frozen Universe</div>
+      <div class="seam-title">Mass is not a property. It is a frozen geometric configuration of the field.</div>
+      <div class="seam-thread">The Higgs mechanism describes the <em>fact</em> of symmetry breaking; Kintsugi Physics asks what <strong>geometry</strong> the symmetry breaks into. Topological defects — vortices, knots, windings — are the stable configurations that we call particles. Their energy is what we call mass. The field froze; the ice has structure.</div>
+      <a class="seam-link" href="modules/02-frozen-universe.html">Revisit Module 02 →</a>
+    </div>
+
+    <div class="seam-node" data-delay="200">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 03 · Kepler's Ghosts</div>
+      <div class="seam-title">Topology constrains geometry. Geometry constrains physics.</div>
+      <div class="seam-thread">Five Platonic solids — the only regular polyhedra possible — because of Euler's topological formula. This <strong>finiteness from topology</strong> is the same principle operating at the quantum level: only certain orbital symmetries are allowed, only certain field configurations are stable. Kepler's nested solids were premature; his instinct was not.</div>
+      <a class="seam-link" href="modules/03-keplers-ghosts.html">Revisit Module 03 →</a>
+    </div>
+
+    <div class="seam-node" data-delay="300">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 04 · Fleming's Geometry</div>
+      <div class="seam-title">The universe has a handedness. That handedness is topological.</div>
+      <div class="seam-thread">From Fleming's hand rule to parity violation — the same <strong>cross-product chirality</strong> at every scale, from a copper wire to a galaxy. The vacuum itself is oriented. This orientation was fixed at symmetry breaking (Module 02) and is now a permanent topological invariant. The universe chose a hand when it froze.</div>
+      <a class="seam-link" href="modules/04-flemings-geometry.html">Revisit Module 04 →</a>
+    </div>
+
+    <div class="seam-node" data-delay="400">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 05 · Inertia as Local Space</div>
+      <div class="seam-title">Inertia is the field's stiffness, not the object's stubbornness.</div>
+      <div class="seam-thread">A frozen topological configuration (Module 02) is coupled to the surrounding field. Accelerate it and you must deform the field — <strong>that deformation is inertia.</strong> Frame-dragging (Gravity Probe B) confirms that rotating mass drags spacetime. Linear inertia is the same effect, unbent. Mach was right about the reference frame; Newton was right about the resistance.</div>
+      <a class="seam-link" href="modules/05-inertia-local-space.html">Revisit Module 05 →</a>
+    </div>
+
+    <div class="seam-node" data-delay="500">
+      <div class="seam-dot"></div>
+      <div class="seam-num">Seam 06 · Prime Structures</div>
+      <div class="seam-title">If mass is counted by integers, primes are the alphabet.</div>
+      <div class="seam-thread">Topological winding numbers are integers. Primes are the irreducible components of integers. The <strong>Montgomery-Dyson connection</strong> — Riemann zeros matching quantum energy levels — suggests that the prime structure is not mathematics observing physics, but mathematics <em>being</em> physics. The mass spectrum may be a sentence written in primes.</div>
+      <a class="seam-link" href="modules/06-prime-structures.html">Revisit Module 06 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ THE ARGUMENT ═══ -->
+<div class="argument">
+  <h2>The complete<br><em>argument</em></h2>
+  <div class="sub">In seven steps</div>
+
+  <div class="arg-step"><div class="arg-number">1</div><div class="arg-text">Quantum fields fill all of space. Particles are not objects <em>in</em> the field — they are <strong>stable configurations of the field itself</strong>.</div></div>
+
+  <div class="arg-step"><div class="arg-number">2</div><div class="arg-text">At high temperature (the early universe), the field is maximally disordered. No stable configurations exist. <strong>Nothing has mass.</strong></div></div>
+
+  <div class="arg-step"><div class="arg-number">3</div><div class="arg-text">Below a critical temperature, the field undergoes <strong>spontaneous symmetry breaking</strong> — it freezes. This is the Higgs mechanism, correctly described by the Standard Model.</div></div>
+
+  <div class="arg-step"><div class="arg-number">4</div><div class="arg-text">The frozen field contains <strong>topological defects</strong>: vortices, knots, windings that cannot be removed by smooth deformation. These defects are topologically protected. They are <em>permanent</em>.</div></div>
+
+  <div class="arg-step"><div class="arg-number">5</div><div class="arg-text">The properties of each defect — its energy (mass), its winding number (charge), its orientation (chirality) — are determined entirely by the <strong>geometry of the configuration</strong>. Different geometries give different particles.</div></div>
+
+  <div class="arg-step"><div class="arg-number">6</div><div class="arg-text">The number of stable configurations is finite, because <strong>topology constrains geometry</strong> — just as Euler's formula constrains the number of Platonic solids to exactly five. This topological finiteness produces the finite particle spectrum.</div></div>
+
+  <div class="arg-step"><div class="arg-number">7</div><div class="arg-text">Inertia arises because each frozen configuration is coupled to the surrounding field. Accelerating it requires deforming the field around it. <strong>The field's stiffness is what we experience as mass.</strong></div></div>
+
+  <div class="arg-conclusion">
+    <div class="gold-rule"></div>
+    <p><strong>Mass is not a fundamental property of matter.</strong> It is the energy of a specific geometric configuration of the quantum vacuum — a shape the universe decided to hold still. The periodic table, the particle zoo, the hierarchy problem, inertia itself — all are downstream consequences of the topology of the frozen field.</p>
+    <div class="gold-rule"></div>
+  </div>
+</div>
+
+<!-- ═══ CONNECTION MAP ═══ -->
+<div class="connections-section">
+  <div class="connections-header">
+    <h2>How the seams connect</h2>
+    <p>Each module links to every other. The argument is not linear — it is a web.</p>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="cv" width="800" height="500"></canvas>
+  </div>
+</div>
+
+<!-- ═══ WHAT REMAINS ═══ -->
+<div class="remains">
+  <h2>What remains <em>to be found</em></h2>
+  <div class="remains-grid">
+    <div class="remains-card">
+      <div class="remains-label">Open question</div>
+      <div class="remains-q">Can the specific particle masses be derived from topological invariants?</div>
+      <div class="remains-body">The argument says mass arises from topology. It does not yet derive the electron mass (0.511 MeV) from first principles. This is the hardest open problem — and the test that would confirm or refute the framework.</div>
+    </div>
+    <div class="remains-card">
+      <div class="remains-label">Open question</div>
+      <div class="remains-q">Why three generations?</div>
+      <div class="remains-body">The Standard Model has three generations of fermions. If the generation structure arises from topological constraints (Module 06), the number three should be derivable. It has not yet been derived.</div>
+    </div>
+    <div class="remains-card">
+      <div class="remains-label">Open question</div>
+      <div class="remains-q">Is gravity a topological effect?</div>
+      <div class="remains-body">If inertial mass arises from field topology (Module 05), and inertial mass equals gravitational mass (the equivalence principle), then gravity itself may be a topological phenomenon. This would unify gravity with the other forces — the oldest open problem in physics.</div>
+    </div>
+    <div class="remains-card">
+      <div class="remains-label">Open question</div>
+      <div class="remains-q">What breaks the symmetry?</div>
+      <div class="remains-body">The Higgs mechanism describes the freezing. It does not explain why the universe froze into this particular configuration and not another. The initial conditions of symmetry breaking remain unknown — the deepest golden seam of all.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CLOSING ═══ -->
+<div class="closing">
+  <div class="closing-bowl">
+    <svg viewBox="0 0 160 160">
+      <ellipse cx="80" cy="110" rx="58" ry="17" fill="#1a1810" stroke="#3a3828" stroke-width="1"/>
+      <path d="M22 110 Q22 55 80 46 Q138 55 138 110" fill="#1a1810" stroke="#3a3828" stroke-width="1"/>
+      <ellipse cx="80" cy="46" rx="58" ry="11" fill="#1e1c14" stroke="#3a3828" stroke-width="1"/>
+      <g filter="url(#glow)" opacity="0.9">
+        <path d="M80 52 L72 72 L82 86 L66 108" fill="none" stroke="#e8c97a" stroke-width="1.5"/>
+        <path d="M92 55 L100 75 L90 88 L104 108" fill="none" stroke="#c9a84c" stroke-width="1"/>
+        <path d="M60 64 L50 74 L58 88" fill="none" stroke="#c9a84c" stroke-width=".8"/>
+        <path d="M82 86 L96 95" fill="none" stroke="#e8c97a" stroke-width=".8"/>
+      </g>
+      <circle cx="72" cy="72" r="2" fill="#e8c97a" opacity=".6"/>
+      <circle cx="82" cy="86" r="1.8" fill="#e8c97a" opacity=".5"/>
+    </svg>
+  </div>
+
+  <h2>The bowl is <em>more beautiful</em><br>for having been broken.</h2>
+  <p>This is not the end. It is the gold in the first crack. The argument will deepen, the mathematics will formalise, the predictions will sharpen. What you have seen is the shape of the question.</p>
+  <p>Every great physics framework began as a shape — a geometric intuition about how things connect — before it became equations. Newton saw falling apples and orbiting moons as the same thing. Einstein saw acceleration and gravity as the same thing. Kintsugi Physics sees mass, inertia, chirality, and the particle spectrum as the same thing: <em>geometry, frozen.</em></p>
+
+  <a class="book-link" href="#">Read the complete argument — The Frozen Universe (Amazon) →</a>
+
+  <div class="journey-nav">
+    <a href="../overture.html">Overture</a>
+    <a href="01-two-tables.html">01 · Two Tables</a>
+    <a href="02-frozen-universe.html">02 · Frozen Universe</a>
+    <a href="03-keplers-ghosts.html">03 · Kepler's Ghosts</a>
+    <a href="04-flemings-geometry.html">04 · Fleming's Geometry</a>
+    <a href="05-inertia-local-space.html">05 · Inertia</a>
+    <a href="06-prime-structures.html">06 · Prime Structures</a>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="gold-rule"></div>
+  Kintsugi Physics · An Interactive Journey · 2026<br>
+  <span style="font-style:italic;font-family:Georgia,serif;font-size:.7rem;color:#4a4540">The break is where the light enters. The gold is not repair — it is transformation.</span>
+</div>
+
+<script>
+const TAU = Math.PI * 2;
+
+// ── SCROLL REVEALS ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const delay = parseInt(e.target.dataset.delay || 0);
+      setTimeout(() => e.target.classList.add('visible'), delay);
+      // Peripherals
+      document.getElementById('perL').classList.add('active');
+      document.getElementById('perR').classList.add('active');
+    }
+  });
+}, { threshold: 0.2 });
+
+document.querySelectorAll('.seam-node, .arg-step, .arg-conclusion').forEach(el => observer.observe(el));
+
+// ── CONNECTION MAP ──
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+const NODES = [
+  { id:'two-tables', label:'Two Tables', x:130, y:100, color:'#e8c97a' },
+  { id:'frozen', label:'Frozen Universe', x:400, y:60, color:'#5b8abf' },
+  { id:'kepler', label:"Kepler's Ghosts", x:670, y:100, color:'#4da8a0' },
+  { id:'fleming', label:"Fleming's Geometry", x:200, y:300, color:'#c4714a' },
+  { id:'inertia', label:'Inertia', x:400, y:380, color:'#8875c4' },
+  { id:'primes', label:'Prime Structures', x:600, y:300, color:'#6aad70' },
+  { id:'synthesis', label:'Synthesis', x:400, y:220, color:'#e8c97a' },
+];
+
+const LINKS = [
+  // Everything connects through synthesis
+  [0,6],[1,6],[2,6],[3,6],[4,6],[5,6],
+  // Direct connections
+  [0,1,'Orbital geometry → field topology'],
+  [1,2,'Topological constraints → Platonic finiteness'],
+  [1,3,'Symmetry breaking → chirality freezing'],
+  [1,4,'Frozen configurations → inertial coupling'],
+  [2,5,'Topological finiteness → prime structure'],
+  [3,4,'Oriented topology → frame-dragging'],
+  [4,5,'Winding numbers → prime decomposition'],
+  [0,2,'Shell geometry → polyhedral symmetry'],
+];
+
+let animT = 0;
+
+function drawConnections() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw links
+  for (const link of LINKS) {
+    const a = NODES[link[0]], b = NODES[link[1]];
+    const pulse = Math.sin(animT * 1.5 + link[0] * 0.7) * 0.12 + 0.2;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    // Curved line through midpoint offset
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const isCenter = link[0] === 6 || link[1] === 6;
+    if (!isCenter) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const nx = -dy * 0.12, ny = dx * 0.12;
+      ctx.quadraticCurveTo(mx + nx, my + ny, b.x, b.y);
+    } else {
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.strokeStyle = isCenter ? `rgba(201,168,76,${pulse + 0.1})` : `rgba(201,168,76,${pulse * 0.6})`;
+    ctx.lineWidth = isCenter ? 1.5 : 0.8;
+    ctx.stroke();
+
+    // Label on hover line (show for non-center links with labels)
+    if (link[2] && !isCenter) {
+      const lx = mx + (b.y - a.y) * 0.06;
+      const ly = my - (b.x - a.x) * 0.06;
+      ctx.font = '8px Courier New';
+      ctx.fillStyle = `rgba(201,168,76,${pulse * 0.8})`;
+      ctx.textAlign = 'center';
+      ctx.fillText(link[2], lx, ly);
+    }
+  }
+
+  // Draw nodes
+  for (const n of NODES) {
+    const isCenter = n.id === 'synthesis';
+    const r = isCenter ? 32 : 22;
+    const pulse = Math.sin(animT * 2 + NODES.indexOf(n)) * 0.08 + 0.92;
+
+    // Glow
+    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 1.8);
+    grad.addColorStop(0, n.color + '18');
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(n.x, n.y, r * 1.8, 0, TAU);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Ring
+    ctx.beginPath(); ctx.arc(n.x, n.y, r * pulse, 0, TAU);
+    ctx.strokeStyle = n.color + '88';
+    ctx.lineWidth = isCenter ? 2 : 1.2;
+    ctx.stroke();
+
+    // Fill
+    ctx.beginPath(); ctx.arc(n.x, n.y, r * 0.6 * pulse, 0, TAU);
+    ctx.fillStyle = n.color + '44';
+    ctx.fill();
+
+    // Label
+    ctx.font = isCenter ? 'bold 10px Courier New' : '9px Courier New';
+    ctx.fillStyle = n.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(n.label, n.x, n.y + r + 14);
+  }
+
+  ctx.textAlign = 'left';
+}
+
+function animate() {
+  animT += 0.012;
+  drawConnections();
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

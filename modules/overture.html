@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Overture</title>
+<style>
+:root{
+  --black:#04050a;--deep:#08090f;--surf:#0f1018;
+  --gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.3);
+  --gold-glow:rgba(201,168,76,.08);
+  --text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:'Trebuchet MS',system-ui,sans-serif;
+  --mono:'Courier New',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--black);
+  color:var(--text);
+  font-family:var(--serif);
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ── PERIPHERAL EVOSENSE SIGNALS ── */
+.peripheral{
+  position:fixed;
+  width:3px;height:60vh;
+  top:20vh;
+  opacity:0;
+  transition:opacity 2s;
+  pointer-events:none;
+  z-index:10;
+}
+.peripheral.left{left:0}
+.peripheral.right{right:0}
+.peripheral.visible{opacity:1}
+.peripheral-inner{
+  width:100%;height:100%;
+  background:linear-gradient(180deg,transparent,var(--gold),transparent);
+  animation:peripheralBreath 3.4s ease-in-out infinite;
+}
+@keyframes peripheralBreath{
+  0%,100%{opacity:.15;transform:scaleY(.85)}
+  50%{opacity:.55;transform:scaleY(1)}
+}
+
+/* ── SCENE CONTAINER ── */
+.scene{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:4rem 2rem;
+  position:relative;
+}
+
+/* ── OPENING: HEARTBEAT ── */
+#scene-open{
+  background:var(--black);
+}
+.heartbeat-ring{
+  width:120px;height:120px;
+  border-radius:50%;
+  border:1px solid var(--gold-dim);
+  animation:heartbeat 3.4s ease-in-out infinite;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:3rem;
+}
+.heartbeat-ring::before{
+  content:'';position:absolute;
+  width:140px;height:140px;
+  border-radius:50%;
+  border:1px solid rgba(201,168,76,.1);
+  animation:heartbeat 3.4s ease-in-out infinite .4s;
+}
+.heartbeat-ring::after{
+  content:'';position:absolute;
+  width:160px;height:160px;
+  border-radius:50%;
+  border:1px solid rgba(201,168,76,.05);
+  animation:heartbeat 3.4s ease-in-out infinite .8s;
+}
+.heartbeat-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--gold);
+  opacity:.6;
+  animation:heartbeat 3.4s ease-in-out infinite;
+}
+@keyframes heartbeat{
+  0%,100%{transform:scale(.96);opacity:.6}
+  15%{transform:scale(1.04);opacity:1}
+  30%{transform:scale(.98);opacity:.7}
+  45%{transform:scale(1.02);opacity:.9}
+  60%,90%{transform:scale(.97);opacity:.5}
+}
+
+.open-text{
+  text-align:center;
+  max-width:480px;
+}
+.open-eyebrow{
+  font-family:var(--mono);
+  font-size:.65rem;
+  letter-spacing:.45em;
+  color:var(--text2);
+  text-transform:uppercase;
+  margin-bottom:2rem;
+  animation:fadeUp 2s ease both 1s;
+}
+.open-title{
+  font-size:clamp(1.6rem,4vw,2.6rem);
+  font-weight:400;
+  color:var(--bright);
+  line-height:1.2;
+  letter-spacing:.02em;
+  margin-bottom:1rem;
+  animation:fadeUp 2s ease both 1.5s;
+}
+.open-title em{font-style:italic;color:var(--gold2)}
+.open-sub{
+  font-style:italic;
+  font-size:1rem;
+  color:var(--text2);
+  animation:fadeUp 2s ease both 2s;
+  margin-bottom:2.5rem;
+}
+.scroll-nudge{
+  font-family:var(--mono);
+  font-size:.65rem;
+  letter-spacing:.3em;
+  color:var(--text2);
+  animation:fadeUp 2s ease both 3s, nudgeBounce 2s ease-in-out infinite 5s;
+}
+@keyframes nudgeBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ── BOWL SCENE ── */
+#scene-bowl{
+  min-height:120vh;
+  justify-content:flex-start;
+  padding-top:10vh;
+  gap:0;
+}
+.bowl-stage{
+  position:sticky;
+  top:15vh;
+  width:200px;height:200px;
+  margin-bottom:2rem;
+}
+.bowl-svg{transition:opacity .5s}
+
+/* bowl states controlled by JS scroll */
+.bowl-whole{}
+.bowl-cracks{opacity:0;transition:opacity .8s}
+.bowl-gold{opacity:0;transition:opacity 1.2s}
+
+.narrator{
+  max-width:580px;
+  text-align:center;
+}
+.narrator-block{
+  min-height:60vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.narrator p{
+  font-size:clamp(1rem,2.2vw,1.25rem);
+  line-height:1.9;
+  color:var(--text);
+  max-width:54ch;
+  text-align:left;
+  opacity:0;
+  transform:translateY(16px);
+  transition:opacity .9s ease, transform .9s ease;
+}
+.narrator p.visible{opacity:1;transform:none}
+.narrator p em{font-style:italic;color:var(--bright)}
+.narrator p strong{font-weight:400;color:var(--gold2)}
+.narrator p .gold-word{
+  color:var(--gold2);
+  text-shadow:0 0 20px rgba(201,168,76,.3);
+}
+
+/* ── THE SEAMS SECTION ── */
+#scene-seams{
+  background:var(--deep);
+  padding:8rem 2rem;
+  min-height:auto;
+}
+.seams-heading{
+  font-size:clamp(1.4rem,3vw,2rem);
+  font-weight:400;
+  color:var(--bright);
+  text-align:center;
+  margin-bottom:.5rem;
+  font-style:italic;
+}
+.seams-sub{
+  font-size:.9rem;
+  color:var(--text2);
+  text-align:center;
+  font-family:var(--mono);
+  letter-spacing:.15em;
+  margin-bottom:3rem;
+}
+.seams-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:1.25rem;
+  max-width:900px;
+  margin:0 auto;
+}
+.seam-card{
+  background:rgba(201,168,76,.04);
+  border:1px solid rgba(201,168,76,.15);
+  border-radius:8px;
+  padding:1.5rem;
+  position:relative;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(12px);
+  transition:opacity .7s ease, transform .7s ease, border-color .3s;
+}
+.seam-card.visible{opacity:1;transform:none}
+.seam-card:hover{border-color:var(--gold-dim)}
+.seam-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;
+  transition:opacity .3s;
+}
+.seam-card:hover::before{opacity:1}
+.seam-num{
+  font-family:var(--mono);
+  font-size:.6rem;
+  letter-spacing:.35em;
+  color:var(--gold-dim);
+  text-transform:uppercase;
+  margin-bottom:.6rem;
+}
+.seam-title{
+  font-size:1.1rem;
+  color:var(--bright);
+  margin-bottom:.4rem;
+}
+.seam-desc{
+  font-size:.85rem;
+  color:var(--text2);
+  line-height:1.65;
+  font-family:var(--sans);
+}
+
+/* ── HERACLITUS INTERLUDE ── */
+.interlude{
+  padding:6rem 2rem;
+  text-align:center;
+  max-width:600px;
+  margin:0 auto;
+  min-height:auto;
+}
+.interlude-quote{
+  font-size:clamp(1.1rem,2.5vw,1.5rem);
+  font-style:italic;
+  color:var(--bright);
+  line-height:1.75;
+  margin-bottom:1rem;
+  opacity:0;
+  transition:opacity 1.2s ease;
+}
+.interlude-quote.visible{opacity:1}
+.interlude-attr{
+  font-family:var(--mono);
+  font-size:.65rem;
+  letter-spacing:.3em;
+  color:var(--text2);
+  text-transform:uppercase;
+}
+.interlude-note{
+  margin-top:1.5rem;
+  font-size:.9rem;
+  color:var(--text2);
+  line-height:1.7;
+  max-width:44ch;
+  margin-left:auto;
+  margin-right:auto;
+  opacity:0;
+  transition:opacity 1s ease .4s;
+}
+.interlude-note.visible{opacity:1}
+
+/* ── PORTAL ── */
+#scene-portal{
+  min-height:80vh;
+  background:var(--black);
+}
+.portal-container{
+  text-align:center;
+  max-width:500px;
+}
+.portal-heading{
+  font-size:clamp(1.4rem,3.5vw,2.2rem);
+  font-weight:400;
+  color:var(--bright);
+  margin-bottom:.75rem;
+  opacity:0;
+  transition:opacity 1s ease;
+}
+.portal-heading.visible{opacity:1}
+.portal-heading em{font-style:italic;color:var(--gold2)}
+.portal-sub{
+  font-size:.9rem;
+  color:var(--text2);
+  font-family:var(--mono);
+  letter-spacing:.15em;
+  margin-bottom:2.5rem;
+  opacity:0;
+  transition:opacity 1s ease .3s;
+}
+.portal-sub.visible{opacity:1}
+.portal-btn{
+  display:inline-block;
+  padding:1rem 2.5rem;
+  border:1px solid var(--gold-dim);
+  border-radius:40px;
+  color:var(--gold2);
+  text-decoration:none;
+  font-family:var(--sans);
+  font-size:.9rem;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  background:rgba(201,168,76,.06);
+  transition:all .3s;
+  opacity:0;
+  cursor:pointer;
+}
+.portal-btn:hover{
+  background:rgba(201,168,76,.15);
+  border-color:var(--gold);
+  box-shadow:0 0 30px rgba(201,168,76,.15);
+}
+.portal-btn.visible{opacity:1;transition:all .3s, opacity 1s ease .6s}
+
+/* ── EVOSENSE CALM ORBIT (peripheral guide) ── */
+.calm-orbit{
+  position:absolute;
+  width:280px;height:280px;
+  border-radius:50%;
+  border:1px solid rgba(201,168,76,.06);
+  pointer-events:none;
+}
+.calm-orbit .glint{
+  position:absolute;
+  width:4px;height:4px;
+  border-radius:50%;
+  background:var(--gold);
+  top:50%;left:50%;
+  transform-origin:0 0;
+  animation:orbit 8s linear infinite;
+  opacity:.5;
+}
+@keyframes orbit{
+  from{transform:rotate(0deg) translateX(138px) translateY(-2px)}
+  to{transform:rotate(360deg) translateX(138px) translateY(-2px)}
+}
+
+/* ── GOLD RULE ── */
+.gold-rule{
+  width:60px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:2rem auto;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .narrator p,.seam-card,.interlude-quote,.interlude-note,
+  .portal-heading,.portal-sub,.portal-btn{opacity:1!important;transform:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- EvoSense peripheral signals -->
+<div class="peripheral left" id="per-left"><div class="peripheral-inner"></div></div>
+<div class="peripheral right" id="per-right"><div class="peripheral-inner"></div></div>
+
+<!-- ══ SCENE 1: OPENING ══ -->
+<div class="scene" id="scene-open">
+  <div class="heartbeat-ring"><div class="heartbeat-dot"></div></div>
+  <div class="open-text">
+    <div class="open-eyebrow">Kintsugi Physics · An Interactive Journey</div>
+    <h1 class="open-title">Something is<br><em>broken</em> in physics.<br>That is the good news.</h1>
+    <p class="open-sub">A guide for the curious. No equations required to begin.</p>
+    <div class="scroll-nudge">↓ &nbsp; scroll to enter &nbsp; ↓</div>
+  </div>
+</div>
+
+<!-- ══ SCENE 2: THE BOWL ══ -->
+<div class="scene" id="scene-bowl">
+
+  <div class="bowl-stage" id="bowl-stage">
+    <!-- WHOLE BOWL -->
+    <svg id="bowl-whole" class="bowl-svg" viewBox="0 0 200 200" style="position:absolute;top:0;left:0">
+      <ellipse cx="100" cy="130" rx="72" ry="22" fill="none" stroke="#2a2820" stroke-width="2"/>
+      <path d="M28 130 Q28 70 100 60 Q172 70 172 130" fill="#1a1810" stroke="#3a3828" stroke-width="1.5"/>
+      <ellipse cx="100" cy="60" rx="72" ry="14" fill="#1e1c14" stroke="#3a3828" stroke-width="1"/>
+      <ellipse cx="100" cy="130" rx="72" ry="22" fill="#1a1810" stroke="#3a3828" stroke-width="1"/>
+    </svg>
+    <!-- CRACKS -->
+    <svg id="bowl-cracks" class="bowl-svg" viewBox="0 0 200 200" style="position:absolute;top:0;left:0;opacity:0">
+      <path d="M100 68 L88 95 L105 112 L82 140" fill="none" stroke="#c9a84c" stroke-width="1" stroke-dasharray="100" stroke-dashoffset="100">
+        <animate attributeName="stroke-dashoffset" from="100" to="0" dur="1.2s" fill="freeze" begin="0s"/>
+      </path>
+      <path d="M115 75 L130 98 L118 115 L135 138" fill="none" stroke="#c9a84c" stroke-width=".8" stroke-dasharray="80" stroke-dashoffset="80">
+        <animate attributeName="stroke-dashoffset" from="80" to="0" dur="1s" fill="freeze" begin=".3s"/>
+      </path>
+      <path d="M75 85 L60 100 L72 120" fill="none" stroke="#c9a84c" stroke-width=".7" stroke-dasharray="60" stroke-dashoffset="60">
+        <animate attributeName="stroke-dashoffset" from="60" to="0" dur=".8s" fill="freeze" begin=".5s"/>
+      </path>
+      <path d="M105 112 L125 125" fill="none" stroke="#c9a84c" stroke-width=".6" stroke-dasharray="30" stroke-dashoffset="30">
+        <animate attributeName="stroke-dashoffset" from="30" to="0" dur=".5s" fill="freeze" begin=".8s"/>
+      </path>
+    </svg>
+    <!-- GOLD GLOW -->
+    <svg id="bowl-gold" class="bowl-svg" viewBox="0 0 200 200" style="position:absolute;top:0;left:0;opacity:0">
+      <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <g filter="url(#glow)">
+        <path d="M100 68 L88 95 L105 112 L82 140" fill="none" stroke="#e8c97a" stroke-width="2"/>
+        <path d="M115 75 L130 98 L118 115 L135 138" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+        <path d="M75 85 L60 100 L72 120" fill="none" stroke="#c9a84c" stroke-width="1.2"/>
+        <path d="M105 112 L125 125" fill="none" stroke="#e8c97a" stroke-width="1.2"/>
+      </g>
+      <animateTransform attributeName="transform" type="scale" values="1;1.01;1" dur="3.4s" repeatCount="indefinite" additive="sum"/>
+    </svg>
+  </div>
+
+  <div class="narrator" id="narrator">
+
+    <div class="narrator-block">
+      <p id="n1">You know me. Or you think you do. I'm the sort of person who can't quite leave things alone.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n2">I was looking at something once that everyone in the room had seen a thousand times. The periodic table. One of those enormous laminated things they pin to every chemistry classroom wall, slightly crooked, slightly faded at the corners.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n3">And I thought: <em>why does it look like that?</em><br><br>Not what it means. Not what's in it. But why — why does it look like <em>that?</em> Eighteen columns. Seven rows. A strange gap in the middle that gets resolved at the bottom like a footnote the universe forgot to put in the text.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n4">The ancient Greeks had a word for this feeling. <em>Aporia.</em> The productive confusion that arrives just before understanding. Socrates cultivated it deliberately. He'd ask a question everyone thought they knew the answer to — and keep asking, gently, until the certainty dissolved and something more interesting appeared underneath.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n5">This bowl. You know what it is. A bowl. Dark, quiet, ordinary.<br><br>Now watch.</p>
+    </div>
+
+    <div class="narrator-block" id="nb-crack">
+      <p id="n6">It breaks. And everything that was hidden in the surface — every fault, every tension that was always there — <strong>becomes visible.</strong></p>
+    </div>
+
+    <div class="narrator-block" id="nb-gold">
+      <p id="n7">The Japanese call this <strong class="gold-word">kintsugi</strong>. Repair with gold. The philosophy is not that the bowl is fixed. It is that the <em>story of its breaking</em> is now part of the bowl. That story is gold.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n8">Now. What if this bowl is physics?</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n9">Every theory we have — every beautiful, hard-won theory — is a thought. A deliberate cut through reality, trying to catch the universe in the act of being itself. Newton's mechanics. Maxwell's fields. Quantum theory. Einstein's geometry of spacetime.<br><br>Each one: <em>magnificent.</em> Each one: broken somewhere.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n10">We call the cracks by names that sound like answers: <strong>Dark Matter. Dark Energy. The measurement problem.</strong> We say something is <em>fundamental</em> or <em>primary</em> or <em>simple</em> — which is the honest scientific way of saying: we haven't found the story behind the seam yet.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n11">Heraclitus said: <em>you cannot step into the same river twice.</em> He meant it as a puzzle. I think he meant something else too — that the thing you thought was fixed was always in motion. You just weren't watching the right edges.</p>
+    </div>
+
+    <div class="narrator-block">
+      <p id="n12">That is what we are going to do together. Watch the edges. Follow the <span class="gold-word">gold seams</span>. Not to fix physics — physics doesn't need fixing by the likes of me — but to see what becomes more beautiful in the breaking.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ INTERLUDE: PYTHAGOREAN ══ -->
+<div class="scene interlude" id="scene-interlude">
+  <div class="interlude-quote" id="pyth-quote">
+    "There is geometry in the humming of the strings.<br>There is music in the spacing of the spheres."
+  </div>
+  <div class="gold-rule"></div>
+  <div class="interlude-attr">Pythagoras · c.570–495 BCE</div>
+  <div class="interlude-note" id="pyth-note">He was wrong about the specific geometry. He was right about the instinct. The universe does speak in patterns — and those patterns are deeper than any single table, any single model, any single century's best guess.</div>
+</div>
+
+<!-- ══ SCENE 3: THE GOLDEN SEAMS ══ -->
+<div class="scene" id="scene-seams">
+  <div class="seams-heading">The golden seams we will follow</div>
+  <div class="seams-sub">Seven journeys into the places where physics breaks beautifully</div>
+  <div class="seams-grid" id="seams-grid">
+    <div class="seam-card" data-delay="0">
+      <div class="seam-num">Seam 01 · The Two Tables</div>
+      <div class="seam-title">The periodic table is in the wrong order</div>
+      <div class="seam-desc">Mendeleev's arrangement has served us well for 150 years. There is another arrangement — truer to the geometry of quantum mechanics — that no chemistry classroom has ever shown you.</div>
+    </div>
+    <div class="seam-card" data-delay="100">
+      <div class="seam-num">Seam 02 · The Frozen Universe</div>
+      <div class="seam-title">Mass is not a thing. It is a shape.</div>
+      <div class="seam-desc">What if mass is not a property that particles carry, but a configuration that fields take? What if the Higgs field is not an answer but a description — and the real question is what geometry produces it?</div>
+    </div>
+    <div class="seam-card" data-delay="200">
+      <div class="seam-num">Seam 03 · Kepler's Ghosts</div>
+      <div class="seam-title">He was 400 years early</div>
+      <div class="seam-desc">Kepler tried to fit the planets into nested Platonic solids and was laughed at — eventually. But quantum orbital shells are nested geometric structures. His instinct was not wrong. Only premature.</div>
+    </div>
+    <div class="seam-card" data-delay="300">
+      <div class="seam-num">Seam 04 · Fleming's Geometry</div>
+      <div class="seam-title">The universe is left-handed. Why?</div>
+      <div class="seam-desc">From the humble right-hand rule to parity violation in particle physics — the same geometric handedness appears at every scale. The universe has a chirality. Nobody fully knows why.</div>
+    </div>
+    <div class="seam-card" data-delay="400">
+      <div class="seam-num">Seam 05 · Inertia as Local Space</div>
+      <div class="seam-title">Resistance is not a force. It is geometry.</div>
+      <div class="seam-desc">What if inertia — the thing that makes it hard to accelerate — is not a property of mass, but a relationship between local space and surrounding space? Mach's principle, reimagined.</div>
+    </div>
+    <div class="seam-card" data-delay="500">
+      <div class="seam-num">Seam 06 · Prime Structures</div>
+      <div class="seam-title">Is anyone else counting?</div>
+      <div class="seam-desc">If intelligence anywhere in the universe encodes itself in mathematics, what would it use? Nested prime structures appear throughout nature. We may already be hearing a signal. We may not know how to listen.</div>
+    </div>
+    <div class="seam-card" style="grid-column:1/-1;max-width:540px;margin:0 auto" data-delay="600">
+      <div class="seam-num">Seam 07 · The Kintsugi Synthesis</div>
+      <div class="seam-title">The bowl, repaired</div>
+      <div class="seam-desc">Six journeys, six gold seams. In the final movement, they reassemble into a single geometric field theory of reality. The bowl, whole again — and more beautiful for every crack that had to be found.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PORTAL ══ -->
+<div class="scene" id="scene-portal">
+  <div class="calm-orbit"><div class="glint"></div></div>
+  <div class="portal-container">
+    <div class="gold-rule"></div>
+    <div class="portal-heading" id="portal-h">Begin with <em>the two tables.</em></div>
+    <div class="portal-sub" id="portal-s">Module 01 · The periodic table has a secret</div>
+    <a class="portal-btn" id="portal-btn" href="modules/01-two-tables.html">Enter the first seam →</a>
+    <div style="margin-top:2.5rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;color:var(--text2);opacity:0;transition:opacity 1s ease 1s" id="book-note">The book — <em>The Frozen Universe</em> — is available if you want to go deeper at any point.</div>
+  </div>
+</div>
+
+<script>
+// ── SCROLL-DRIVEN REVEALS ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.classList.add('visible');
+      // trigger peripheral signals when body is engaged
+      if(e.target.id && e.target.id.startsWith('n')) {
+        document.getElementById('per-left').classList.add('visible');
+        document.getElementById('per-right').classList.add('visible');
+      }
+    }
+  });
+}, {threshold: 0.25});
+
+// Observe narrator paragraphs
+document.querySelectorAll('.narrator p').forEach(p => observer.observe(p));
+// Observe seam cards with stagger
+document.querySelectorAll('.seam-card').forEach((card,i) => {
+  const delay = parseInt(card.dataset.delay||0);
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'), delay);
+    });
+  }, {threshold:0.15});
+  io.observe(card);
+});
+// Observe interlude
+document.querySelectorAll('.interlude-quote,.interlude-note').forEach(el => observer.observe(el));
+// Observe portal
+document.querySelectorAll('#portal-h,#portal-s,.portal-btn,#book-note').forEach(el => observer.observe(el));
+
+// ── BOWL STATE: scroll-driven ──
+const bowlCracks = document.getElementById('bowl-cracks');
+const bowlGold = document.getElementById('bowl-gold');
+
+const crackObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      bowlCracks.style.opacity = '1';
+    }
+  });
+}, {threshold: 0.5});
+crackObserver.observe(document.getElementById('nb-crack'));
+
+const goldObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      bowlGold.style.opacity = '1';
+      bowlCracks.style.opacity = '0.3';
+    }
+  });
+}, {threshold: 0.5});
+goldObserver.observe(document.getElementById('nb-gold'));
+
+// Make portal button visible via same observer
+observer.observe(document.querySelector('.portal-btn'));
+</script>
+
+</body>
+</html>

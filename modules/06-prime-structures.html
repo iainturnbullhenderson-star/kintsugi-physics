@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 06: Prime Structures</title>
+<style>
+:root{--black:#04050a;--deep:#08090f;--surf:#0f1018;--surf2:#161822;
+--gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.25);
+--text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+--blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;--green:#6aad70;
+--serif:Georgia,'Times New Roman',serif;--sans:'Trebuchet MS',system-ui,sans-serif;--mono:'Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+.mod-header{padding:2.5rem 2rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.08);max-width:1100px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.75rem}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;color:var(--bright)}
+h1 em{font-style:italic;color:var(--gold2)}
+.provocation{font-family:var(--serif);font-style:italic;color:var(--text2);font-size:1rem;margin-top:.5rem;max-width:60ch}
+
+/* ── MAIN LAYOUT ── */
+.main-layout{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1100px;margin:0 auto;min-height:65vh}
+@media(max-width:860px){.main-layout{grid-template-columns:1fr}}
+.vis-col{padding:1.5rem;background:var(--deep);border-right:1px solid rgba(201,168,76,.08);display:flex;flex-direction:column;gap:.75rem}
+@media(max-width:860px){.vis-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.08)}}
+.canvas-wrap{width:100%;aspect-ratio:1;background:#000;border-radius:6px;overflow:hidden;border:1px solid rgba(201,168,76,.12);position:relative}
+canvas{display:block;width:100%;height:100%}
+
+.btn-row{display:flex;gap:.4rem;flex-wrap:wrap}
+.sim-btn{padding:.4rem .75rem;background:none;border:1px solid rgba(201,168,76,.15);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.sim-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.sim-btn.active{background:rgba(201,168,76,.12);color:var(--gold2);border-color:var(--gold-dim)}
+
+.ctrl-row{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.65rem}
+.ctrl-row label{color:var(--text2);letter-spacing:.08em;min-width:70px}
+.ctrl-row input[type=range]{flex:1;accent-color:var(--gold)}
+.ctrl-row .val{color:var(--gold);min-width:40px;text-align:right}
+
+.info-panel{background:var(--surf);border:1px solid rgba(201,168,76,.1);border-radius:6px;padding:1rem;font-size:.78rem;line-height:1.6;min-height:60px}
+.info-panel h3{font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.4rem}
+.info-panel .highlight{color:var(--gold2)}
+.info-panel .teal{color:var(--teal)}
+.note-text{font-family:var(--mono);font-size:.6rem;color:var(--text2);opacity:.65;letter-spacing:.06em}
+
+/* ── NARRATIVE ── */
+.narr-col{padding:2rem 2.5rem;overflow-y:auto}
+.narr-stage{padding:1.5rem 0;border-bottom:1px solid rgba(201,168,76,.06)}
+.narr-stage:last-child{border:none}
+.stage-num{font-family:var(--mono);font-size:.6rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.6rem}
+.narr-stage h2{font-family:var(--serif);font-size:clamp(1.1rem,2vw,1.5rem);font-weight:400;color:var(--bright);margin-bottom:.8rem;line-height:1.3}
+.narr-stage h2 em{font-style:italic;color:var(--gold2)}
+.narr-stage p{font-size:.88rem;line-height:1.85;color:var(--text);max-width:52ch;margin-bottom:.7rem}
+.narr-stage p em{font-style:italic;color:var(--bright)}
+.narr-stage p strong{font-weight:400;color:var(--gold2)}
+.kintsugi-box{background:rgba(201,168,76,.05);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:1rem 1.25rem;margin:1rem 0}
+.kintsugi-box p{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--bright);margin:0;line-height:1.7}
+
+/* ── PATTERN GALLERY ── */
+.pattern-section{max-width:1100px;margin:0 auto;padding:2.5rem 2rem;border-top:1px solid rgba(201,168,76,.08)}
+.section-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.section-title{font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--bright);margin-bottom:1.5rem}
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.pattern-card{background:var(--surf2);border:1px solid rgba(201,168,76,.1);border-radius:8px;padding:1.5rem;transition:border-color .3s}
+.pattern-card:hover{border-color:var(--gold-dim)}
+.pattern-where{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;color:var(--text2);text-transform:uppercase;margin-bottom:.4rem}
+.pattern-title{font-family:var(--serif);font-size:1.05rem;color:var(--bright);margin-bottom:.5rem}
+.pattern-body{font-size:.8rem;color:var(--text);line-height:1.65}
+.pattern-seq{font-family:var(--mono);font-size:.7rem;color:var(--teal);margin-top:.5rem;word-break:break-all}
+.pattern-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--gold);margin-top:.6rem;padding-top:.6rem;border-top:1px solid rgba(201,168,76,.1);line-height:1.5}
+
+/* ── PHYSICISTS + NAV ── */
+.physicist-section{padding:2rem;max-width:1100px;margin:0 auto}
+.physicist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin-top:1rem}
+.ph-card{background:var(--surf2);border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.25rem}
+.ph-name{font-family:var(--serif);font-size:1rem;color:var(--gold2);margin-bottom:.15rem}
+.ph-dates{font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.15em;margin-bottom:.5rem}
+.ph-text{font-size:.78rem;color:var(--text);line-height:1.6}
+.ph-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--teal);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.15)}
+.module-nav{display:flex;justify-content:space-between;padding:2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08);font-family:var(--mono);font-size:.7rem}
+.module-nav a{color:var(--text2);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:1px}
+.module-nav a:hover{color:var(--gold2)}
+</style>
+</head>
+<body>
+
+<div class="mod-header">
+  <div class="eyebrow">Kintsugi Physics · Module 06 of VII</div>
+  <h1>Prime <em>Structures</em></h1>
+  <div class="provocation">The primes are not random. They have architecture. And that architecture appears in places it has no right to be.</div>
+</div>
+
+<div class="main-layout">
+  <div class="vis-col">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="600" height="600"></canvas>
+    </div>
+
+    <div class="btn-row">
+      <button class="sim-btn active" id="btn-ulam">Ulam Spiral</button>
+      <button class="sim-btn" id="btn-sacks">Sacks Spiral</button>
+      <button class="sim-btn" id="btn-gap">Gap Spectrum</button>
+      <button class="sim-btn" id="btn-nested">Nested Primes</button>
+    </div>
+
+    <div class="ctrl-row">
+      <label>Range</label>
+      <input type="range" id="range-slider" min="500" max="40000" step="500" value="10000">
+      <span class="val" id="range-val">10,000</span>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <h3>Ulam Spiral</h3>
+      <div>Stanislaw Ulam doodled this during a boring lecture in 1963. Write the integers in a spiral. Highlight the primes. <span class="highlight">They fall on diagonal lines.</span> Nobody fully knows why.</div>
+    </div>
+
+    <div class="note-text">Hover over any highlighted point to see its prime value. Switch views to see different geometric structures in the same numbers.</div>
+  </div>
+
+  <div class="narr-col">
+    <div class="narr-stage">
+      <div class="stage-num">The accident</div>
+      <h2>A bored mathematician<br><em>drew a spiral.</em></h2>
+      <p>In 1963, Stanislaw Ulam was sitting through a dull lecture. He started writing integers in a spiral pattern — 1 at the centre, 2 to the right, 3 above, 4 to the left, on and on. Then he circled the primes.</p>
+      <p>They fell on diagonal lines. Not perfectly, not all of them — but far more than random chance would produce. The primes, supposedly the most irregular objects in mathematics, were <em>arranging themselves geometrically.</em></p>
+      <p>This was not expected. It has never been fully explained.</p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The pattern beneath</div>
+      <h2>Primes are not random.<br><em>They have architecture.</em></h2>
+      <p>The Ulam spiral is only the beginning. Primes cluster in families defined by quadratic polynomials. They distribute themselves along the Riemann zeta function's non-trivial zeros — which themselves appear to encode the spacing of energy levels in quantum chaotic systems.</p>
+      <p>Montgomery and Dyson discovered in 1973 that the statistical distribution of Riemann zeros matches the eigenvalue distribution of random Hermitian matrices — the same mathematics that describes energy levels of heavy nuclei. The primes are <em>entangled with quantum mechanics.</em></p>
+      <p>This connection remains one of the deepest unsolved problems in mathematics.</p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">Nested primes</div>
+      <h2>Primes <em>within</em> primes.<br>Structure all the way down.</h2>
+      <p>Take the list of primes: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31... Now take the primes whose <em>index</em> is also prime: the 2nd prime (3), the 3rd prime (5), the 5th prime (11), the 7th prime (17), the 11th prime (31)...</p>
+      <p>These are the <strong>super-primes</strong> or nested primes. The sequence continues: 3, 5, 11, 17, 31, 41, 59, 67, 83, 109... They thin out but never vanish. Primality has layers.</p>
+      <div class="kintsugi-box"><p>"If you wanted to encode a signal that would be recognised by any intelligence capable of receiving it — regardless of their biology, their language, their sensory apparatus — what structure would you use? You would use the one structure that is purely mathematical, universally discoverable, and infinitely deep. You would use nested primes."</p></div>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The Kintsugi question</div>
+      <h2>Is anyone else<br><em>counting?</em></h2>
+      <p>Kintsugi Physics does not claim to have detected an alien signal. It proposes something more fundamental: that the prime number structure appears in physics because <em>the universe itself is counting.</em></p>
+      <p>If mass arises from topological winding numbers (Module 02), and those winding numbers are integers, then the stability of matter depends on which integers produce stable configurations. Primes — being the irreducible components of all integers — would be the <em>fundamental building blocks of the mass spectrum.</em></p>
+      <p>The question is not whether we should be listening for prime signals in radio waves. The question is whether the mass spectrum of the Standard Model already <em>is</em> a prime signal — one that has been in front of us for a century.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PATTERN GALLERY -->
+<div class="pattern-section">
+  <div class="section-eyebrow">Where prime structure appears in nature</div>
+  <div class="section-title">Too many coincidences to be coincidence</div>
+  <div class="pattern-grid">
+    <div class="pattern-card">
+      <div class="pattern-where">Quantum mechanics</div>
+      <div class="pattern-title">Riemann zeros ↔ nuclear energy levels</div>
+      <div class="pattern-body">The spacing of Riemann zeta function zeros matches the eigenvalue distribution of GUE random matrices — the same statistics governing heavy nuclear energy levels. The primes encode quantum mechanics, or quantum mechanics encodes the primes.</div>
+      <div class="pattern-seq">ζ(s) = Σ n⁻ˢ → non-trivial zeros on Re(s) = ½</div>
+      <div class="pattern-kintsugi">If mass arises from topology, and topology is counted by integers, then the primes are the irreducible mass generators.</div>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-where">Biology</div>
+      <div class="pattern-title">Cicada emergence cycles: 13 and 17 years</div>
+      <div class="pattern-body">Periodical cicadas emerge in cycles of 13 or 17 years — both prime. This minimises overlap with predator cycles of 2, 3, 4, 5, or 6 years. Evolution discovered that primes have minimal common factors.</div>
+      <div class="pattern-seq">13 and 17: no common factors with any shorter cycle</div>
+      <div class="pattern-kintsugi">Biology performing number theory. The same principle — prime stability — may govern which topological configurations survive in the quantum vacuum.</div>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-where">Particle physics</div>
+      <div class="pattern-title">Generation structure: 3 generations of matter</div>
+      <div class="pattern-body">The Standard Model has exactly 3 generations of fermions: (e, μ, τ), (u, c, t), (d, s, b). Why 3? Not 2, not 4. Three is the second prime. The number of colour charges is also 3.</div>
+      <div class="pattern-seq">Generations: 3 · Colours: 3 · Spatial dimensions: 3</div>
+      <div class="pattern-kintsugi">If the number of stable topological configurations at each level is constrained by primality, then 3 generations may be a topological necessity, not an accident.</div>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-where">SETI</div>
+      <div class="pattern-title">What would an intentional signal look like?</div>
+      <div class="pattern-body">A civilisation wanting to be noticed would transmit something that could not arise naturally: a sequence whose structure requires intentional construction. Nested primes — primes indexed by primes indexed by primes — would be recognisable to any mathematician in the universe.</div>
+      <div class="pattern-seq">Level 0: 2,3,5,7,11,13,17,19,23,29,31…<br>Level 1: 3,5,11,17,31,41,59,67,83,109…<br>Level 2: 5,11,31,59,127,179,277,331…</div>
+      <div class="pattern-kintsugi">The real question: is the mass spectrum itself a nested prime signal? Are we inside the message?</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHYSICISTS -->
+<div class="physicist-section">
+  <div class="section-eyebrow">Voices behind this seam</div>
+  <div class="physicist-grid" id="physGrid"></div>
+</div>
+
+<div class="module-nav">
+  <a href="04-flemings-geometry.html">← Module 04: Fleming's Geometry</a>
+  <a href="05-inertia-local-space.html">← Module 05: Inertia as Local Space</a>
+  <a href="07-kintsugi-synthesis.html">Module 07: The Kintsugi Synthesis →</a>
+</div>
+
+<script>
+const TAU = Math.PI * 2;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let maxN = 10000;
+let mode = 'ulam';
+let animT = 0;
+let hoveredPrime = null;
+
+// ── PRIME SIEVE ──
+function sieve(n) {
+  const is = new Uint8Array(n + 1);
+  is.fill(1); is[0] = is[1] = 0;
+  for (let i = 2; i * i <= n; i++) {
+    if (is[i]) for (let j = i*i; j <= n; j += i) is[j] = 0;
+  }
+  return is;
+}
+
+let isPrime = sieve(50000);
+let primeList = [];
+for (let i = 2; i <= 50000; i++) if (isPrime[i]) primeList.push(i);
+
+function nestedPrimes(depth) {
+  const levels = [primeList.slice()];
+  for (let d = 1; d <= depth; d++) {
+    const prev = levels[d-1];
+    const next = [];
+    for (let i = 0; i < prev.length; i++) {
+      const idx = prev[i]; // 1-indexed position
+      if (idx - 1 < primeList.length) {
+        next.push(primeList[idx - 1]);
+      }
+    }
+    levels.push(next);
+  }
+  return levels;
+}
+
+// ── ULAM SPIRAL ──
+function drawUlam() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2;
+  // Spiral: directions are right, up, left, down
+  const dx = [1, 0, -1, 0];
+  const dy = [0, -1, 0, 1];
+  let x = 0, y = 0, dir = 0, steps = 1, stepCount = 0, turnCount = 0;
+  const scale = Math.max(1, Math.min(4, 300 / Math.sqrt(maxN)));
+  
+  for (let n = 1; n <= maxN; n++) {
+    if (isPrime[n]) {
+      const sx = cx + x * scale;
+      const sy = cy + y * scale;
+      if (sx >= -2 && sx <= W+2 && sy >= -2 && sy <= H+2) {
+        // Color by prime gap pattern
+        const pidx = primeList.indexOf(n);
+        const hue = (n * 0.15) % 360;
+        const size = scale < 2 ? 1 : 1.5;
+        ctx.fillStyle = `hsla(${40 + hue * 0.1}, 70%, 55%, 0.85)`;
+        ctx.fillRect(sx - size/2, sy - size/2, size, size);
+      }
+    }
+    // Move spiral
+    x += dx[dir]; y += dy[dir];
+    stepCount++;
+    if (stepCount >= steps) {
+      stepCount = 0;
+      dir = (dir + 1) % 4;
+      turnCount++;
+      if (turnCount % 2 === 0) steps++;
+    }
+  }
+
+  // Highlight diagonal lines
+  ctx.strokeStyle = 'rgba(201,168,76,0.08)';
+  ctx.lineWidth = 0.5;
+  for (let d = -300; d <= 300; d += Math.ceil(300/Math.sqrt(maxN)*4)) {
+    ctx.beginPath();
+    ctx.moveTo(cx + d*scale - 300, cy - 300);
+    ctx.lineTo(cx + d*scale + 300, cy + 300);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + d*scale - 300, cy + 300);
+    ctx.lineTo(cx + d*scale + 300, cy - 300);
+    ctx.stroke();
+  }
+}
+
+// ── SACKS SPIRAL ──
+function drawSacks() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2;
+  const scale = Math.min(W, H) * 0.45 / Math.sqrt(maxN);
+  
+  // Background: all integers as very faint dots
+  for (let n = 1; n <= maxN; n++) {
+    const r = Math.sqrt(n) * scale * 8;
+    const a = Math.sqrt(n) * TAU;
+    const sx = cx + Math.cos(a) * r;
+    const sy = cy + Math.sin(a) * r;
+    if (sx < -5 || sx > W+5 || sy < -5 || sy > H+5) continue;
+    if (isPrime[n]) {
+      const hue = (n * 0.08) % 60 + 20;
+      ctx.fillStyle = `hsla(${hue}, 75%, 55%, 0.9)`;
+      ctx.fillRect(sx-1, sy-1, 2.5, 2.5);
+    }
+  }
+
+  // Spiral arms emerge naturally — draw guide curves
+  ctx.strokeStyle = 'rgba(201,168,76,0.06)';
+  ctx.lineWidth = 0.5;
+  for (let k = 0; k < 6; k++) {
+    ctx.beginPath();
+    for (let t = 0; t < maxN; t += 5) {
+      const n = t + k;
+      const r = Math.sqrt(n) * scale * 8;
+      const a = Math.sqrt(n) * TAU;
+      const sx = cx + Math.cos(a) * r;
+      const sy = cy + Math.sin(a) * r;
+      t === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+}
+
+// ── GAP SPECTRUM ──
+function drawGap() {
+  ctx.clearRect(0, 0, W, H);
+  const pList = primeList.filter(p => p <= maxN);
+  const gaps = [];
+  for (let i = 1; i < pList.length; i++) gaps.push(pList[i] - pList[i-1]);
+  if (gaps.length === 0) return;
+
+  const maxGap = Math.max(...gaps);
+  const barW = W / gaps.length;
+  
+  for (let i = 0; i < gaps.length; i++) {
+    const g = gaps[i];
+    const h = (g / maxGap) * (H - 60);
+    const x = i * barW;
+    // Color by gap size
+    const hue = g === 2 ? 160 : g <= 6 ? 45 : g <= 12 ? 30 : 10;
+    const alpha = Math.max(0.3, 1 - i/gaps.length * 0.5);
+    ctx.fillStyle = `hsla(${hue}, 70%, 50%, ${alpha})`;
+    ctx.fillRect(x, H - 30 - h, Math.max(1, barW - 0.5), h);
+  }
+
+  // Twin prime highlights (gap = 2)
+  ctx.fillStyle = 'rgba(77,168,160,0.4)';
+  for (let i = 0; i < gaps.length; i++) {
+    if (gaps[i] === 2) {
+      const x = i * barW;
+      ctx.fillRect(x, H - 30, Math.max(1, barW), 3);
+    }
+  }
+
+  // Labels
+  ctx.font = '10px Courier New';
+  ctx.fillStyle = 'rgba(201,168,76,0.5)';
+  ctx.textAlign = 'left';
+  ctx.fillText('Prime gaps · height = gap size · teal markers = twin primes (gap 2)', 10, 16);
+  ctx.fillStyle = 'rgba(77,168,160,0.5)';
+  ctx.fillText(`Twin primes found: ${gaps.filter(g=>g===2).length}`, 10, 30);
+  ctx.fillStyle = 'rgba(201,168,76,0.3)';
+  ctx.fillText(`Max gap: ${maxGap}`, 10, 44);
+}
+
+// ── NESTED PRIMES ──
+function drawNested() {
+  ctx.clearRect(0, 0, W, H);
+  const levels = nestedPrimes(3);
+  const colors = ['rgba(91,138,191,0.7)', 'rgba(201,168,76,0.8)', 'rgba(196,113,74,0.9)', 'rgba(136,117,196,1)'];
+  const labels = ['Primes', 'Super-primes (p[p])', 'Super²-primes (p[p[p]])', 'Super³-primes'];
+  const cx = W/2, cy = H/2;
+  const maxR = Math.min(W, H) * 0.42;
+
+  // Draw concentric rings
+  for (let lv = 0; lv < levels.length && lv < 4; lv++) {
+    const primes = levels[lv].filter(p => p <= maxN);
+    if (primes.length === 0) continue;
+    const ringR = maxR * (0.3 + lv * 0.22);
+    
+    // Ring background
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringR, 0, TAU);
+    ctx.strokeStyle = colors[lv].replace(/[\d.]+\)/, '0.15)');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Place primes around the ring
+    for (let i = 0; i < primes.length; i++) {
+      const angle = (i / primes.length) * TAU - Math.PI/2;
+      const px = cx + Math.cos(angle) * ringR;
+      const py = cy + Math.sin(angle) * ringR;
+      const size = 2 + (3 - lv) * 0.8;
+      ctx.beginPath();
+      ctx.arc(px, py, size, 0, TAU);
+      ctx.fillStyle = colors[lv];
+      ctx.fill();
+
+      // Connect to next level
+      if (lv < levels.length - 1 && lv < 3) {
+        const nextPrimes = levels[lv+1].filter(p => p <= maxN);
+        const nextR = maxR * (0.3 + (lv+1) * 0.22);
+        const ni = nextPrimes.indexOf(primes[i]);
+        if (ni >= 0) {
+          const na = (ni / nextPrimes.length) * TAU - Math.PI/2;
+          const nx = cx + Math.cos(na) * nextR;
+          const ny = cy + Math.sin(na) * nextR;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(nx, ny);
+          ctx.strokeStyle = colors[lv+1].replace(/[\d.]+\)/, '0.12)');
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Level label
+    ctx.font = '9px Courier New';
+    ctx.fillStyle = colors[lv];
+    ctx.textAlign = 'center';
+    ctx.fillText(`${labels[lv]} (${primes.length})`, cx, cy - ringR - 8);
+  }
+
+  // Center
+  ctx.font = '11px Georgia';
+  ctx.fillStyle = 'rgba(201,168,76,0.6)';
+  ctx.textAlign = 'center';
+  ctx.fillText('Nested', cx, cy - 6);
+  ctx.fillText('Primes', cx, cy + 8);
+  ctx.textAlign = 'left';
+
+  // Pulse animation on inner ring
+  const pulse = Math.sin(animT * 2) * 0.15 + 0.85;
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR * 0.3, 0, TAU);
+  ctx.strokeStyle = `rgba(91,138,191,${0.1 * pulse})`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ── DRAW DISPATCH ──
+const DRAWS = { ulam: drawUlam, sacks: drawSacks, gap: drawGap, nested: drawNested };
+const INFO = {
+  ulam: { title:'Ulam Spiral', text:'Integers written in a spiral, primes highlighted. <span class="highlight">The diagonal lines are real</span> — they correspond to quadratic polynomials that generate unusually many primes. Euler\'s n²+n+41 is the most famous.' },
+  sacks: { title:'Sacks Spiral', text:'Each integer n is placed at angle √n turns from the start, distance √n from centre. Primes cluster on <span class="highlight">smooth curves</span> — these are the visual fingerprints of prime-generating polynomials.' },
+  gap: { title:'Prime Gap Spectrum', text:'The distance between consecutive primes. <span class="teal">Teal marks = twin primes</span> (gap of 2). The gaps grow on average as log(n), but twin primes may continue forever — the Twin Prime Conjecture, still unproven.' },
+  nested: { title:'Nested Primes', text:'Primes indexed by primes indexed by primes. Four levels of recursion. The connections between levels reveal the <span class="highlight">deep structure of primality itself</span> — each level is sparser but never empty.' },
+};
+
+function setMode(m) {
+  mode = m;
+  ['ulam','sacks','gap','nested'].forEach(id => {
+    document.getElementById('btn-'+id).classList.toggle('active', id===m);
+  });
+  const info = INFO[m];
+  document.getElementById('infoPanel').innerHTML = `<h3>${info.title}</h3><div>${info.text}</div>`;
+  DRAWS[m]();
+}
+
+function animate() {
+  animT += 0.016;
+  DRAWS[mode]();
+  requestAnimationFrame(animate);
+}
+
+// ── CONTROLS ──
+document.getElementById('btn-ulam').addEventListener('click', () => setMode('ulam'));
+document.getElementById('btn-sacks').addEventListener('click', () => setMode('sacks'));
+document.getElementById('btn-gap').addEventListener('click', () => setMode('gap'));
+document.getElementById('btn-nested').addEventListener('click', () => setMode('nested'));
+
+document.getElementById('range-slider').addEventListener('input', e => {
+  maxN = parseInt(e.target.value);
+  document.getElementById('range-val').textContent = maxN.toLocaleString();
+});
+
+// ── PHYSICISTS ──
+const PHYS = [
+  {name:'Srinivasa Ramanujan', dates:'1887–1920', text:'Discovered extraordinary relationships between prime numbers, infinite series, and modular forms — often without formal proof, arriving at results by a process he described as divine revelation. His partition function work connects primes to geometry.', k:'Ramanujan saw the architecture of number without needing the machinery. The patterns he found in primes prefigure the topological structures of Kintsugi Physics.'},
+  {name:'Bernhard Riemann', dates:'1826–1866', text:'In a single 8-page paper (1859), he connected the distribution of primes to the zeros of a complex function (ζ). The Riemann Hypothesis — that all non-trivial zeros lie on Re(s)=½ — remains the most important unsolved problem in mathematics.', k:'If the Riemann zeros encode quantum energy levels, and if mass arises from topological quantum configurations, then the zeta function is the bridge between pure mathematics and the mass spectrum.'},
+  {name:'Alan Turing', dates:'1912–1954', text:'Computed the first Riemann zeros by machine in 1950, verifying they lay on the critical line. Also proposed the chemical basis of biological pattern formation (morphogenesis), connecting mathematical structure to physical reality.', k:'Turing connected computation, cryptography, and biology through mathematical pattern. His morphogenesis work shows that the same equations produce both abstract number-theoretic patterns and physical stripes on a tiger.'},
+  {name:'Kintsugi Physics', dates:'2024–', text:'Proposes that the prime number structure in nature is not coincidental but fundamental: if mass arises from topological winding numbers (integers), then the irreducible components of those integers (primes) are the fundamental building blocks of the mass spectrum.', k:'The golden seam: are the primes the alphabet of mass? Is the Standard Model a sentence written in prime numbers? The question sounds speculative. The Montgomery-Dyson connection suggests it may not be.'},
+];
+const pg = document.getElementById('physGrid');
+PHYS.forEach(p => {
+  const c = document.createElement('div'); c.className='ph-card';
+  c.innerHTML=`<div class="ph-name">${p.name}</div><div class="ph-dates">${p.dates}</div><div class="ph-text">${p.text}</div><div class="ph-kintsugi">${p.k}</div>`;
+  pg.appendChild(c);
+});
+
+// ── START ──
+animate();
+</script>
+</body>
+</html>

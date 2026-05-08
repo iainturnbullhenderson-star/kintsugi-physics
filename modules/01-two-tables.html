@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 01: The Two Tables</title>
+
+<style>
+:root{
+  --black:#07080d;--deep:#0e1019;--surf:#151820;--surf2:#1c2030;
+  --gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.35);
+  --text:#ccc8c0;--text2:#888580;--bright:#f0ebe2;
+  --blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:'Trebuchet MS','Gill Sans',system-ui,sans-serif;
+  --mono:'Courier New',Courier,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;overflow-x:hidden}
+
+/* ── HEADER ── */
+.mod-header{text-align:center;padding:3.5rem 2rem 2rem;position:relative}
+.mod-header::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:1rem}
+h1{font-family:var(--serif);font-size:clamp(2.2rem,6vw,4rem);font-weight:300;color:var(--bright);letter-spacing:.03em;margin-bottom:.5rem}
+h1 em{font-style:italic;color:var(--gold2)}
+.provocation{font-family:var(--serif);font-style:italic;font-size:1.1rem;color:var(--text2);max-width:500px;margin:0 auto}
+
+/* ── PHYSICIST BAR ── */
+.physicist-bar{display:flex;gap:1rem;padding:2rem;overflow-x:auto;max-width:1100px;margin:0 auto;justify-content:center;flex-wrap:wrap}
+.physicist-card{background:var(--surf);border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:1.2rem 1.4rem;min-width:200px;max-width:260px;flex:1;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.physicist-card.visible{opacity:1;transform:none}
+.physicist-card:hover{border-color:var(--gold-dim)}
+.ph-name{font-family:var(--serif);font-size:1.1rem;color:var(--gold2);margin-bottom:.2rem}
+.ph-dates{font-family:var(--mono);font-size:9px;color:var(--text2);letter-spacing:.15em;margin-bottom:.6rem}
+.ph-contribution{font-size:12px;color:var(--text);line-height:1.55}
+.ph-insight{font-family:var(--mono);font-size:10px;color:var(--teal);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.2)}
+
+/* ── VIEW TOGGLE ── */
+.toggle-zone{text-align:center;padding:2rem 1rem 1rem}
+.toggle-group{display:inline-flex;border:1px solid var(--gold-dim);border-radius:40px;overflow:hidden;background:var(--deep)}
+.toggle-btn{font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:.08em;padding:.6rem 1.8rem;cursor:pointer;background:none;border:none;color:var(--text2);transition:all .3s}
+.toggle-btn.active{background:rgba(201,168,76,.15);color:var(--gold2)}
+.view-label{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--text2);margin-top:.8rem;min-height:1.4rem;transition:opacity .3s}
+
+/* ── TABLE AREA ── */
+.table-area{position:relative;padding:1.5rem 1rem 1rem}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-view{display:none}
+.table-view.active{display:block}
+
+/* ── ELEMENT GRID ── */
+.trad-grid{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:2px;max-width:900px;margin:0 auto}
+.geom-grid{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:2px;min-width:960px}
+.lanthanide-gap{grid-column:1/-1;height:8px}
+
+/* ── ELEMENT CELL ── */
+.el{cursor:pointer;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s,filter .15s;position:relative;aspect-ratio:1}
+.el:hover{transform:scale(1.15);z-index:10;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+.el.selected{outline:2px solid var(--gold);outline-offset:1px;z-index:5}
+.el .z{font-family:var(--mono);font-size:clamp(6px,0.7vw,9px);color:rgba(255,255,255,.5);line-height:1;margin-bottom:1px}
+.el .sym{font-family:var(--sans);font-weight:600;font-size:clamp(8px,1vw,14px);color:var(--bright);line-height:1}
+.geom-grid .el .z{display:none}
+.geom-grid .el .sym{font-size:clamp(7px,0.8vw,11px)}
+
+/* placeholder cells */
+.ph-cell{background:rgba(201,168,76,.08);border:1px dashed rgba(201,168,76,.2);border-radius:3px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;font-family:var(--mono);font-size:7px;color:var(--gold-dim);text-align:center;line-height:1.2}
+
+/* element category colors */
+.cat-hydrogen{background:#3a3010}
+.cat-alkali{background:#3a1208}
+.cat-alkaline{background:#2e2008}
+.cat-transition{background:#0e1e35}
+.cat-post-trans{background:#152820}
+.cat-metalloid{background:#0e2228}
+.cat-nonmetal{background:#1a1030}
+.cat-halogen{background:#301018}
+.cat-noble{background:#1a1a2e}
+.cat-lanthanide{background:#2a1e08}
+.cat-actinide{background:#2a1018}
+
+.cat-hydrogen .sym{color:#e8c234}
+.cat-alkali .sym{color:#e87a5a}
+.cat-alkaline .sym{color:#d4a843}
+.cat-transition .sym{color:#7aabdf}
+.cat-post-trans .sym{color:#7fc4a8}
+.cat-metalloid .sym{color:#68c4c0}
+.cat-nonmetal .sym{color:#a89ae8}
+.cat-halogen .sym{color:#e08888}
+.cat-noble .sym{color:#9898c8}
+.cat-lanthanide .sym{color:#c4a060}
+.cat-actinide .sym{color:#c48060}
+
+/* ── BLOCK LABELS (geometric) ── */
+.block-labels{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:2px;min-width:960px;margin-bottom:4px}
+.block-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--text2);text-align:center;padding:2px 0}
+.block-f{grid-column:1/15;color:rgba(196,160,96,.7)}
+.block-d{grid-column:15/25;color:rgba(122,171,223,.7)}
+.block-p{grid-column:25/31;color:rgba(168,154,232,.7)}
+.block-s{grid-column:31/33;color:rgba(232,194,122,.7)}
+
+/* shell labels */
+.shell-labels{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:2px;min-width:960px;margin-top:4px}
+.shell-label{font-family:var(--mono);font-size:8px;color:var(--text2);text-align:left;padding:2px 0}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:.5rem .75rem;padding:1.2rem 2rem;max-width:960px;margin:0 auto;justify-content:center}
+.leg-item{display:flex;align-items:center;gap:.4rem;font-size:12px;color:var(--text2)}
+.leg-swatch{width:10px;height:10px;border-radius:2px}
+
+/* ── DETAIL PANEL ── */
+.detail-overlay{position:fixed;inset:0;background:rgba(7,8,13,.7);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.detail-overlay.open{display:flex}
+.detail-panel{background:var(--surf);border-top:1px solid var(--gold-dim);border-radius:12px 12px 0 0;padding:2rem;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;animation:slideup .3s ease}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.panel-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem}
+.panel-symbol{font-family:var(--serif);font-size:4rem;font-weight:300;color:var(--gold2);line-height:1}
+.panel-close{font-family:var(--mono);font-size:18px;color:var(--text2);cursor:pointer;background:none;border:none;padding:.5rem}
+.panel-name{font-family:var(--serif);font-size:1.6rem;color:var(--bright);margin-bottom:.25rem}
+.panel-z{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.2em}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+.panel-stat{background:var(--deep);border-radius:6px;padding:.8rem 1rem}
+.panel-stat-label{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--text2);text-transform:uppercase;margin-bottom:.3rem}
+.panel-stat-val{font-size:1rem;color:var(--bright)}
+.panel-ec{font-family:var(--mono);font-size:12px;color:var(--teal);margin-top:.25rem}
+.panel-section{margin-top:1.2rem;padding-top:1rem;border-top:1px solid rgba(201,168,76,.12)}
+.panel-section h3{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.6rem}
+.panel-section p{font-size:13px;color:var(--text);line-height:1.65}
+.orbital-svg{display:block;margin:.8rem auto}
+.kintsugi-insight{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--gold-light, #d4b870);padding:1rem;background:rgba(201,168,76,.06);border-left:2px solid var(--gold-dim);border-radius:0 6px 6px 0;margin-top:.6rem;line-height:1.7}
+
+/* ── FOOTER ── */
+.mod-footer{text-align:center;padding:3rem 2rem;border-top:1px solid rgba(201,168,76,.1);margin-top:2rem}
+.mod-footer p{font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:.15em;margin:.2rem 0}
+.mod-footer .nav{display:flex;gap:1.5rem;justify-content:center;margin-top:1rem}
+.mod-footer .nav a{font-family:var(--sans);font-size:13px;color:var(--text2);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.3);padding-bottom:1px;transition:color .2s}
+.mod-footer .nav a:hover{color:var(--gold2)}
+
+@media(max-width:700px){
+  .physicist-bar{padding:1rem}
+  .physicist-card{min-width:160px}
+  .panel-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="mod-header">
+  <div class="eyebrow">Kintsugi Physics · Module 01 of VII</div>
+  <h1>The <em>Two</em> Tables</h1>
+  <p class="provocation">What if the periodic table has been in the wrong order for 150 years?</p>
+</div>
+
+<div class="physicist-bar" id="physicist-bar"></div>
+
+
+<div class="seam-invitation" id="seam-invite">
+  <svg class="seam-line" viewBox="0 0 900 24" preserveAspectRatio="none">
+    <path id="seam-path" d="M0 12 Q150 4 300 12 Q450 20 600 12 Q750 4 900 12"
+      fill="none" stroke="#c9a84c" stroke-width="1"
+      stroke-dasharray="900" stroke-dashoffset="900">
+      <animate attributeName="stroke-dashoffset" from="900" to="0"
+        dur="2.5s" fill="freeze" begin="0.5s"/>
+    </path>
+    <circle r="3" fill="#e8c97a" opacity="0.8">
+      <animateMotion dur="2.5s" fill="freeze" begin="0.5s">
+        <mpath href="#seam-path"/>
+      </animateMotion>
+    </circle>
+  </svg>
+  <p class="seam-text" id="seam-text">This table has kept a secret for 150 years. <span class="seam-cta">Follow the gold →</span></p>
+</div>
+<style>
+.seam-invitation{
+  max-width:900px;margin:0 auto;
+  padding:.5rem 1rem 0;
+  text-align:center;
+}
+.seam-line{
+  width:100%;height:24px;
+  display:block;
+  margin-bottom:.6rem;
+}
+.seam-text{
+  font-family:Georgia,serif;
+  font-style:italic;
+  font-size:.95rem;
+  color:rgba(201,168,76,.6);
+  cursor:default;
+  transition:color .4s;
+  animation:seam-pulse 3s ease-in-out infinite 3s;
+}
+.seam-text:hover{color:var(--gold2,#e8c97a)}
+.seam-cta{
+  color:var(--gold2,#e8c97a);
+  cursor:pointer;
+  border-bottom:1px solid rgba(201,168,76,.3);
+  padding-bottom:1px;
+  transition:border-color .3s;
+}
+.seam-cta:hover{border-color:var(--gold2,#e8c97a)}
+@keyframes seam-pulse{
+  0%,100%{opacity:.6} 50%{opacity:1}
+}
+</style>
+
+<div class="toggle-zone">
+  <div class="toggle-group">
+    <button class="toggle-btn active" id="btn-trad" onclick="setView('trad')">Traditional · Mendeleev 1869</button>
+    <button class="toggle-btn" id="btn-geom" onclick="setView('geom')">Geometric · Janet 1928 / Kintsugi Physics</button>
+  </div>
+  <div class="view-label" id="view-label">Organised by atomic number — a masterpiece of pattern recognition, but geometry is hiding beneath</div>
+</div>
+
+<div class="table-area">
+  <!-- TRADITIONAL TABLE -->
+  <div class="table-view active" id="view-trad">
+    <div class="table-scroll">
+      <div class="trad-grid" id="trad-grid"></div>
+    </div>
+  </div>
+
+  <!-- GEOMETRIC TABLE -->
+  <div class="table-view" id="view-geom">
+    <div class="table-scroll">
+      <div class="block-labels">
+        <div class="block-label block-f">← f-block · complex orbital geometry (4f, 5f)</div>
+        <div class="block-label block-d">d-block · rosette geometry</div>
+        <div class="block-label block-p">p-block · triaxial</div>
+        <div class="block-label block-s">s ·sphere</div>
+      </div>
+      <div class="geom-grid" id="geom-grid"></div>
+      <div style="display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:2px;min-width:960px;margin-top:4px">
+        <div style="grid-column:1/15;font-family:var(--mono);font-size:9px;color:rgba(196,160,96,.5);text-align:center">Lanthanides / Actinides integrated into main body (rows 6–7)</div>
+        <div style="grid-column:31/33;font-family:var(--mono);font-size:9px;color:rgba(232,194,122,.5);text-align:center">He aligns with Be, Mg, Ca here — not with Ne</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="overlay" onclick="closePanel(event)">
+  <div class="detail-panel" id="detail-panel">
+    <div id="panel-content"></div>
+  </div>
+</div>
+
+<div class="mod-footer">
+  <p>KINTSUGI PHYSICS · INTERACTIVE JOURNEY</p>
+  <p style="font-style:italic;font-family:'Cormorant Garamond',serif;font-size:13px;color:#5a5650;margin-top:.5rem">The geometric table is not a correction to Mendeleev — it is a deeper question asked of the same data</p>
+  <div class="nav">
+    <a href="#">← Journey Index</a>
+    <a href="#">Module 02: The Frozen Universe →</a>
+    <a href="#" style="color:var(--gold-dim)">The Book (Amazon)</a>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// ELEMENT DATA
+// [Z, sym, name, mass, cat, trad_period, trad_group, geom_row, geom_col, orbital_type]
+// tp=8: lanthanide row; tp=9: actinide row
+// ══════════════════════════════════
+const E = [
+ [1,'H','Hydrogen','1.008','hydrogen',1,1,1,31,'s'],
+ [2,'He','Helium','4.003','noble',1,18,1,32,'s'],
+ [3,'Li','Lithium','6.941','alkali',2,1,2,31,'s'],
+ [4,'Be','Beryllium','9.012','alkaline',2,2,2,32,'s'],
+ [5,'B','Boron','10.81','metalloid',2,13,2,25,'p'],
+ [6,'C','Carbon','12.01','nonmetal',2,14,2,26,'p'],
+ [7,'N','Nitrogen','14.01','nonmetal',2,15,2,27,'p'],
+ [8,'O','Oxygen','16.00','nonmetal',2,16,2,28,'p'],
+ [9,'F','Fluorine','19.00','halogen',2,17,2,29,'p'],
+ [10,'Ne','Neon','20.18','noble',2,18,2,30,'p'],
+ [11,'Na','Sodium','22.99','alkali',3,1,3,31,'s'],
+ [12,'Mg','Magnesium','24.31','alkaline',3,2,3,32,'s'],
+ [13,'Al','Aluminium','26.98','post-trans',3,13,3,25,'p'],
+ [14,'Si','Silicon','28.09','metalloid',3,14,3,26,'p'],
+ [15,'P','Phosphorus','30.97','nonmetal',3,15,3,27,'p'],
+ [16,'S','Sulfur','32.07','nonmetal',3,16,3,28,'p'],
+ [17,'Cl','Chlorine','35.45','halogen',3,17,3,29,'p'],
+ [18,'Ar','Argon','39.95','noble',3,18,3,30,'p'],
+ [19,'K','Potassium','39.10','alkali',4,1,4,31,'s'],
+ [20,'Ca','Calcium','40.08','alkaline',4,2,4,32,'s'],
+ [21,'Sc','Scandium','44.96','transition',4,3,4,15,'d'],
+ [22,'Ti','Titanium','47.87','transition',4,4,4,16,'d'],
+ [23,'V','Vanadium','50.94','transition',4,5,4,17,'d'],
+ [24,'Cr','Chromium','52.00','transition',4,6,4,18,'d'],
+ [25,'Mn','Manganese','54.94','transition',4,7,4,19,'d'],
+ [26,'Fe','Iron','55.85','transition',4,8,4,20,'d'],
+ [27,'Co','Cobalt','58.93','transition',4,9,4,21,'d'],
+ [28,'Ni','Nickel','58.69','transition',4,10,4,22,'d'],
+ [29,'Cu','Copper','63.55','transition',4,11,4,23,'d'],
+ [30,'Zn','Zinc','65.38','transition',4,12,4,24,'d'],
+ [31,'Ga','Gallium','69.72','post-trans',4,13,4,25,'p'],
+ [32,'Ge','Germanium','72.63','metalloid',4,14,4,26,'p'],
+ [33,'As','Arsenic','74.92','metalloid',4,15,4,27,'p'],
+ [34,'Se','Selenium','78.96','nonmetal',4,16,4,28,'p'],
+ [35,'Br','Bromine','79.90','halogen',4,17,4,29,'p'],
+ [36,'Kr','Krypton','83.80','noble',4,18,4,30,'p'],
+ [37,'Rb','Rubidium','85.47','alkali',5,1,5,31,'s'],
+ [38,'Sr','Strontium','87.62','alkaline',5,2,5,32,'s'],
+ [39,'Y','Yttrium','88.91','transition',5,3,5,15,'d'],
+ [40,'Zr','Zirconium','91.22','transition',5,4,5,16,'d'],
+ [41,'Nb','Niobium','92.91','transition',5,5,5,17,'d'],
+ [42,'Mo','Molybdenum','95.96','transition',5,6,5,18,'d'],
+ [43,'Tc','Technetium','(98)','transition',5,7,5,19,'d'],
+ [44,'Ru','Ruthenium','101.1','transition',5,8,5,20,'d'],
+ [45,'Rh','Rhodium','102.9','transition',5,9,5,21,'d'],
+ [46,'Pd','Palladium','106.4','transition',5,10,5,22,'d'],
+ [47,'Ag','Silver','107.9','transition',5,11,5,23,'d'],
+ [48,'Cd','Cadmium','112.4','transition',5,12,5,24,'d'],
+ [49,'In','Indium','114.8','post-trans',5,13,5,25,'p'],
+ [50,'Sn','Tin','118.7','post-trans',5,14,5,26,'p'],
+ [51,'Sb','Antimony','121.8','metalloid',5,15,5,27,'p'],
+ [52,'Te','Tellurium','127.6','metalloid',5,16,5,28,'p'],
+ [53,'I','Iodine','126.9','halogen',5,17,5,29,'p'],
+ [54,'Xe','Xenon','131.3','noble',5,18,5,30,'p'],
+ [55,'Cs','Caesium','132.9','alkali',6,1,6,31,'s'],
+ [56,'Ba','Barium','137.3','alkaline',6,2,6,32,'s'],
+ [57,'La','Lanthanum','138.9','lanthanide',8,4,6,15,'d'],
+ [58,'Ce','Cerium','140.1','lanthanide',8,5,6,1,'f'],
+ [59,'Pr','Praseodymium','140.9','lanthanide',8,6,6,2,'f'],
+ [60,'Nd','Neodymium','144.2','lanthanide',8,7,6,3,'f'],
+ [61,'Pm','Promethium','(145)','lanthanide',8,8,6,4,'f'],
+ [62,'Sm','Samarium','150.4','lanthanide',8,9,6,5,'f'],
+ [63,'Eu','Europium','152.0','lanthanide',8,10,6,6,'f'],
+ [64,'Gd','Gadolinium','157.3','lanthanide',8,11,6,7,'f'],
+ [65,'Tb','Terbium','158.9','lanthanide',8,12,6,8,'f'],
+ [66,'Dy','Dysprosium','162.5','lanthanide',8,13,6,9,'f'],
+ [67,'Ho','Holmium','164.9','lanthanide',8,14,6,10,'f'],
+ [68,'Er','Erbium','167.3','lanthanide',8,15,6,11,'f'],
+ [69,'Tm','Thulium','168.9','lanthanide',8,16,6,12,'f'],
+ [70,'Yb','Ytterbium','173.0','lanthanide',8,17,6,13,'f'],
+ [71,'Lu','Lutetium','175.0','lanthanide',8,18,6,14,'f'],
+ [72,'Hf','Hafnium','178.5','transition',6,4,6,16,'d'],
+ [73,'Ta','Tantalum','180.9','transition',6,5,6,17,'d'],
+ [74,'W','Tungsten','183.8','transition',6,6,6,18,'d'],
+ [75,'Re','Rhenium','186.2','transition',6,7,6,19,'d'],
+ [76,'Os','Osmium','190.2','transition',6,8,6,20,'d'],
+ [77,'Ir','Iridium','192.2','transition',6,9,6,21,'d'],
+ [78,'Pt','Platinum','195.1','transition',6,10,6,22,'d'],
+ [79,'Au','Gold','197.0','transition',6,11,6,23,'d'],
+ [80,'Hg','Mercury','200.6','transition',6,12,6,24,'d'],
+ [81,'Tl','Thallium','204.4','post-trans',6,13,6,25,'p'],
+ [82,'Pb','Lead','207.2','post-trans',6,14,6,26,'p'],
+ [83,'Bi','Bismuth','209.0','post-trans',6,15,6,27,'p'],
+ [84,'Po','Polonium','(209)','post-trans',6,16,6,28,'p'],
+ [85,'At','Astatine','(210)','halogen',6,17,6,29,'p'],
+ [86,'Rn','Radon','(222)','noble',6,18,6,30,'p'],
+ [87,'Fr','Francium','(223)','alkali',7,1,7,31,'s'],
+ [88,'Ra','Radium','(226)','alkaline',7,2,7,32,'s'],
+ [89,'Ac','Actinium','(227)','actinide',9,4,7,15,'d'],
+ [90,'Th','Thorium','232.0','actinide',9,5,7,1,'f'],
+ [91,'Pa','Protactinium','231.0','actinide',9,6,7,2,'f'],
+ [92,'U','Uranium','238.0','actinide',9,7,7,3,'f'],
+ [93,'Np','Neptunium','(237)','actinide',9,8,7,4,'f'],
+ [94,'Pu','Plutonium','(244)','actinide',9,9,7,5,'f'],
+ [95,'Am','Americium','(243)','actinide',9,10,7,6,'f'],
+ [96,'Cm','Curium','(247)','actinide',9,11,7,7,'f'],
+ [97,'Bk','Berkelium','(247)','actinide',9,12,7,8,'f'],
+ [98,'Cf','Californium','(251)','actinide',9,13,7,9,'f'],
+ [99,'Es','Einsteinium','(252)','actinide',9,14,7,10,'f'],
+ [100,'Fm','Fermium','(257)','actinide',9,15,7,11,'f'],
+ [101,'Md','Mendelevium','(258)','actinide',9,16,7,12,'f'],
+ [102,'No','Nobelium','(259)','actinide',9,17,7,13,'f'],
+ [103,'Lr','Lawrencium','(262)','actinide',9,18,7,14,'f'],
+ [104,'Rf','Rutherfordium','(267)','transition',7,4,7,16,'d'],
+ [105,'Db','Dubnium','(268)','transition',7,5,7,17,'d'],
+ [106,'Sg','Seaborgium','(271)','transition',7,6,7,18,'d'],
+ [107,'Bh','Bohrium','(272)','transition',7,7,7,19,'d'],
+ [108,'Hs','Hassium','(270)','transition',7,8,7,20,'d'],
+ [109,'Mt','Meitnerium','(276)','transition',7,9,7,21,'d'],
+ [110,'Ds','Darmstadtium','(281)','transition',7,10,7,22,'d'],
+ [111,'Rg','Roentgenium','(280)','transition',7,11,7,23,'d'],
+ [112,'Cn','Copernicium','(285)','transition',7,12,7,24,'d'],
+ [113,'Nh','Nihonium','(284)','post-trans',7,13,7,25,'p'],
+ [114,'Fl','Flerovium','(289)','post-trans',7,14,7,26,'p'],
+ [115,'Mc','Moscovium','(288)','post-trans',7,15,7,27,'p'],
+ [116,'Lv','Livermorium','(293)','post-trans',7,16,7,28,'p'],
+ [117,'Ts','Tennessine','(294)','halogen',7,17,7,29,'p'],
+ [118,'Og','Oganesson','(294)','noble',7,18,7,30,'p'],
+];
+// Indices for easy access
+const [iZ,iSYM,iNAME,iMASS,iCAT,iTP,iTG,iGR,iGC,iORB]=Array.from({length:10},(_,i)=>i);
+
+// ── PHYSICIST DATA ──
+const PHYSICISTS = {
+  trad:[
+    {name:'Dmitri Mendeleev',dates:'1834–1907',contribution:'Arranged 63 known elements by atomic mass and valence — and left gaps for undiscovered ones. The gaps were prophecies. Three were confirmed within his lifetime.',insight:'Pattern without explanation: the why awaited quantum mechanics 50 years later'},
+    {name:'Isaac Newton',dates:'1643–1727',contribution:'Showed that chemical behaviour arises from the geometry of force: attraction, repulsion, orbit. The periodic table\'s repeating patterns are geometry in disguise.',insight:'His laws of motion contain the seed of orbital mechanics that explains periodicity'},
+    {name:'Niels Bohr',dates:'1885–1962',contribution:'Quantised the atom into shells of fixed energy — explaining WHY the table has periods of 2, 8, 8, 18, 18, 32. Each period = one complete quantum shell.',insight:'Shell n holds 2n² electrons — the period lengths are geometric, not arbitrary'},
+  ],
+  geom:[
+    {name:'Johannes Kepler',dates:'1571–1630',contribution:'Proposed that planetary orbits fit inside nested Platonic solids: cube, tetrahedron, dodecahedron, icosahedron, octahedron. He was premature — but the geometric instinct was right.',insight:'Quantum shells ARE nested geometric structures. Kepler\'s polyhedra map to orbital symmetry groups'},
+    {name:'Charles Janet',dates:'1849–1932',contribution:'Proposed the Left-Step Periodic Table in 1928 — arranging elements so that each ROW corresponds to a complete quantum shell, not Mendeleev\'s incomplete periods.',insight:'In this table, Helium belongs with Beryllium and Magnesium — all complete s² subshells'},
+    {name:'Kintsugi Physics',dates:'2024–',contribution:'Proposes that orbital geometry reflects underlying field topology: s-orbitals are spherical field configurations; p-orbitals, triaxial; d-orbitals, complex rosettes; f-orbitals, intricate polyhedral.','insight':'Mass itself may emerge from these field topologies — the periodic table as geometry of mass formation'},
+  ]
+};
+
+const LEGEND_CATS=[
+ ['hydrogen','Hydrogen'],['alkali','Alkali metals'],['alkaline','Alkaline earths'],
+ ['transition','Transition metals'],['post-trans','Post-transition'],['metalloid','Metalloids'],
+ ['nonmetal','Nonmetals'],['halogen','Halogens'],['noble','Noble gases'],
+ ['lanthanide','Lanthanides'],['actinide','Actinides'],
+];
+const CAT_COLORS={
+ hydrogen:'#3a3010',alkali:'#3a1208',alkaline:'#2e2008',transition:'#0e1e35',
+ 'post-trans':'#152820',metalloid:'#0e2228',nonmetal:'#1a1030',halogen:'#301018',
+ noble:'#1a1a2e',lanthanide:'#2a1e08',actinide:'#2a1018'
+};
+const CAT_TEXT={
+ hydrogen:'#e8c234',alkali:'#e87a5a',alkaline:'#d4a843',transition:'#7aabdf',
+ 'post-trans':'#7fc4a8',metalloid:'#68c4c0',nonmetal:'#a89ae8',halogen:'#e08888',
+ noble:'#9898c8',lanthanide:'#c4a060',actinide:'#c48060'
+};
+
+// ── ORBITAL SVG ──
+function orbitalSVG(type) {
+  const W=100,H=80,cx=50,cy=40,r=30;
+  const cl='fill:none;stroke-width:1.5';
+  let paths='';
+  const g=CAT_TEXT[currentEl?.[iCAT]]||'#c9a84c';
+  if(type==='s'){
+    paths=`<circle cx="${cx}" cy="${cy}" r="${r}" style="${cl};stroke:${g};opacity:.8"/>
+           <circle cx="${cx}" cy="${cy}" r="${r*0.6}" style="${cl};stroke:${g};opacity:.4"/>`;
+  } else if(type==='p'){
+    paths=`<ellipse cx="${cx-r*.6}" cy="${cy}" rx="${r*.5}" ry="${r*.25}" style="${cl};stroke:${g};opacity:.8"/>
+           <ellipse cx="${cx+r*.6}" cy="${cy}" rx="${r*.5}" ry="${r*.25}" style="${cl};stroke:${g};opacity:.8"/>
+           <ellipse cx="${cx}" cy="${cy-r*.6}" rx="${r*.25}" ry="${r*.5}" style="${cl};stroke:${g};opacity:.5"/>
+           <line x1="${cx}" y1="10" x2="${cx}" y2="${H-10}" style="stroke:${g};stroke-width:.5;opacity:.3"/>
+           <line x1="10" y1="${cy}" x2="${W-10}" y2="${cy}" style="stroke:${g};stroke-width:.5;opacity:.3"/>`;
+  } else if(type==='d'){
+    for(let i=0;i<4;i++){
+      const a=i*Math.PI/2;
+      const ex=cx+Math.cos(a)*r*.65, ey=cy+Math.sin(a)*r*.65;
+      paths+=`<ellipse cx="${ex}" cy="${ey}" rx="${r*.35}" ry="${r*.18}" transform="rotate(${i*90} ${ex} ${ey})" style="${cl};stroke:${g};opacity:.8"/>`;
+    }
+    paths+=`<circle cx="${cx}" cy="${cy}" r="4" style="fill:${g};opacity:.4"/>`;
+  } else { // f
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3;
+      const ex=cx+Math.cos(a)*r*.7, ey=cy+Math.sin(a)*r*.7;
+      paths+=`<ellipse cx="${ex}" cy="${ey}" rx="${r*.28}" ry="${r*.14}" transform="rotate(${i*60} ${ex} ${ey})" style="${cl};stroke:${g};opacity:.75"/>`;
+    }
+    paths+=`<circle cx="${cx}" cy="${cy}" r="5" style="fill:none;stroke:${g};stroke-width:1;opacity:.5"/>`;
+  }
+  return `<svg class="orbital-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${paths}</svg>`;
+}
+
+// ── KINTSUGI INSIGHTS ──
+const INSIGHTS = {
+  1:"The universe's simplest field collapse. A single proton, a single electron — perfect spherical symmetry. In the geometric table, Hydrogen occupies column 31: it begins each s¹ column, with Li, Na, K, Rb, Cs, Fr. Not because it is an alkali metal — but because it has one s-electron. The geometry is identical.",
+  2:"Helium's placement is the geometric table's most radical claim. In Mendeleev's table it sits with the noble gases — chemically inert, row 1. In Janet's table it sits with Beryllium, Magnesium, Calcium — all complete s² subshells. The chemistry differs; the orbital geometry is the same. The question Kintsugi Physics asks: which truth is deeper?",
+  6:"Carbon's tetrahedral bonding geometry — four sp³ orbitals pointing to the vertices of a regular tetrahedron — builds the architecture of all life. Carbon is not special because of its position in the table; it is special because its geometric configuration allows maximal bonding diversity.",
+  26:"Iron: the endpoint of stellar nucleosynthesis. Heavier elements require energy to fuse; lighter ones release it. Iron is where stars stop burning. Its position in the d-block represents the stable geometric attractor of nuclear field topology — the universe's preferred mass configuration.",
+  79:"Gold's colour is a relativistic effect: electrons near the nucleus travel at a significant fraction of the speed of light, distorting their orbital geometry. Spacetime itself bends the s-orbitals — and that distortion changes which wavelengths of light are absorbed. The periodic table contains, quietly, general relativity.",
+  92:"Uranium: the heaviest naturally occurring element. Its f-orbitals contain 3 electrons — complex polyhedral configurations that allow fission. The energy released when uranium splits is the energy of returning a high-complexity geometric configuration to simpler ones. Mass as geometry, released.",
+};
+
+function getInsight(z){
+  if(INSIGHTS[z]) return INSIGHTS[z];
+  const orb=currentEl?.[iORB];
+  const blk={s:'spherical field configuration — the simplest orbital geometry, a standing wave on a sphere.',p:'triaxial field configuration — three mutually perpendicular lobes, like coordinate axes made real.',d:'rosette field configuration — complex multi-lobed geometry mediating transition behaviour.',f:'polyhedral field configuration — the most intricate orbital symmetry in the observable periodic table.'}[orb]||'orbital configuration';
+  const gc=currentEl?.[iGC];
+  const col32note=gc>=31?` In the geometric table it occupies column ${gc} — the s-block, aligned with all other elements completing the same subshell.`:gc>=25?` Column ${gc} in the geometric table places it in the p-block — triaxial orbital geometry.`:gc>=15?` Column ${gc} places it in the d-block — complex rosette orbital geometry.`:` Column ${gc} places it in the f-block — the most complex orbital geometry in the standard table.`;
+  return `This element has a ${blk}${col32note} Each column in the geometric table is a family of identical orbital completions — a geometric truth that Mendeleev's table obscures.`;
+}
+
+// ── RENDER FUNCTIONS ──
+let currentView='trad';
+let currentEl=null;
+let selectedCell=null;
+
+function makeCell(el) {
+  const div=document.createElement('div');
+  div.className=`el cat-${el[iCAT]}`;
+  div.dataset.z=el[iZ];
+  div.innerHTML=`<span class="z">${el[iZ]}</span><span class="sym">${el[iSYM]}</span>`;
+  div.title=`${el[iNAME]} (${el[iZ]})`;
+  div.addEventListener('click',()=>openPanel(el,div));
+  return div;
+}
+
+function buildTrad(){
+  const grid=document.getElementById('trad-grid');
+  grid.innerHTML='';
+  // place elements
+  for(const el of E){
+    const cell=makeCell(el);
+    const tp=el[iTP], tg=el[iTG];
+    if(tp<=7){
+      cell.style.gridColumn=tg;
+      cell.style.gridRow=tp;
+    } else if(tp===8){
+      // lanthanide row: grid-row 9, col = tg (4-18)
+      cell.style.gridColumn=tg;
+      cell.style.gridRow=9;
+    } else {
+      // actinide row: grid-row 10
+      cell.style.gridColumn=tg;
+      cell.style.gridRow=10;
+    }
+    grid.appendChild(cell);
+  }
+  // spacer row 8
+  const spacer=document.createElement('div');
+  spacer.className='lanthanide-gap';
+  spacer.style.gridColumn='1/-1';
+  spacer.style.gridRow='8';
+  grid.appendChild(spacer);
+  // placeholder cells at period 6/7, group 3
+  const ph6=document.createElement('div');
+  ph6.className='ph-cell';ph6.style.gridColumn='3';ph6.style.gridRow='6';
+  ph6.textContent='57–71';grid.appendChild(ph6);
+  const ph7=document.createElement('div');
+  ph7.className='ph-cell';ph7.style.gridColumn='3';ph7.style.gridRow='7';
+  ph7.textContent='89–103';grid.appendChild(ph7);
+}
+
+function buildGeom(){
+  const grid=document.getElementById('geom-grid');
+  grid.innerHTML='';
+  for(const el of E){
+    const cell=makeCell(el);
+    cell.style.gridColumn=el[iGC];
+    cell.style.gridRow=el[iGR];
+    grid.appendChild(cell);
+  }
+}
+
+function buildLegend(){
+  const leg=document.getElementById('legend');
+  for(const [cat,label] of LEGEND_CATS){
+    const item=document.createElement('div');item.className='leg-item';
+    item.innerHTML=`<div class="leg-swatch" style="background:${CAT_COLORS[cat]};border:1px solid ${CAT_TEXT[cat]}44"></div><span>${label}</span>`;
+    leg.appendChild(item);
+  }
+}
+
+function buildPhysicists(view){
+  const bar=document.getElementById('physicist-bar');
+  bar.innerHTML='';
+  const list=PHYSICISTS[view];
+  list.forEach((ph,i)=>{
+    const card=document.createElement('div');
+    card.className='physicist-card';
+    card.innerHTML=`<div class="ph-name">${ph.name}</div><div class="ph-dates">${ph.dates}</div><div class="ph-contribution">${ph.contribution}</div><div class="ph-insight">${ph.insight}</div>`;
+    bar.appendChild(card);
+    setTimeout(()=>card.classList.add('visible'),i*120);
+  });
+}
+
+function setView(v){
+  currentView=v;
+  document.getElementById('view-trad').classList.toggle('active',v==='trad');
+  document.getElementById('view-geom').classList.toggle('active',v==='geom');
+  document.getElementById('btn-trad').classList.toggle('active',v==='trad');
+  document.getElementById('btn-geom').classList.toggle('active',v==='geom');
+  document.getElementById('view-label').textContent=v==='trad'
+    ?'Organised by atomic number — a masterpiece of pattern recognition, but geometry is hiding beneath'
+    :'Organised by orbital subshell completion — each column is a family of identical geometric configurations (Janet 1928)';
+  buildPhysicists(v);
+}
+
+// ── DETAIL PANEL ──
+function openPanel(el,cellDiv){
+  currentEl=el;
+  if(selectedCell) selectedCell.classList.remove('selected');
+  selectedCell=cellDiv;cellDiv.classList.add('selected');
+
+  const catColor=CAT_TEXT[el[iCAT]]||'#c9a84c';
+  const blockName={s:'s-block · Spherical orbital geometry',p:'p-block · Triaxial orbital geometry',d:'d-block · Rosette orbital geometry',f:'f-block · Polyhedral orbital geometry'}[el[iORB]];
+  const geomNote=el[iGC]>=31?`Column ${el[iGC]} · Row ${el[iGR]} (s-block, far right)`
+    :el[iGC]>=25?`Column ${el[iGC]} · Row ${el[iGR]} (p-block)`
+    :el[iGC]>=15?`Column ${el[iGC]} · Row ${el[iGR]} (d-block)`
+    :`Column ${el[iGC]} · Row ${el[iGR]} (f-block)`;
+
+  document.getElementById('panel-content').innerHTML=`
+    <div class="panel-top">
+      <div>
+        <div class="panel-symbol" style="color:${catColor}">${el[iSYM]}</div>
+        <div class="panel-name">${el[iNAME]}</div>
+        <div class="panel-z">Z = ${el[iZ]} · ${el[iMASS]} u · ${el[iCAT].replace('-',' ')}</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-grid">
+      <div class="panel-stat">
+        <div class="panel-stat-label">Traditional position</div>
+        <div class="panel-stat-val">Period ${el[iTP]<=7?el[iTP]:el[iTP]===8?'6 (Ln row)':'7 (An row)'} · Group ${el[iTG]}</div>
+      </div>
+      <div class="panel-stat">
+        <div class="panel-stat-label">Geometric position</div>
+        <div class="panel-stat-val" style="font-size:.85rem">${geomNote}</div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <h3>Orbital geometry</h3>
+      <div style="display:flex;align-items:center;gap:1.5rem">
+        ${orbitalSVG(el[iORB])}
+        <div>
+          <div style="color:${catColor};font-family:var(--mono);font-size:11px;margin-bottom:.4rem">${blockName}</div>
+          <div style="font-size:13px;color:var(--text)">
+            ${el[iORB]==='s'?'Spherical symmetry — a standing wave on a sphere. The simplest possible field geometry.'
+              :el[iORB]==='p'?'Three mutually perpendicular lobes along x, y, z axes. Triaxial field configuration.'
+              :el[iORB]==='d'?'Four-leaf rosette geometry in orbital planes. Complex angular momentum configuration.'
+              :'Multi-lobe polyhedral geometry. The most spatially complex orbitals in the standard table.'}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <h3>Kintsugi Physics insight</h3>
+      <div class="kintsugi-insight">${getInsight(el[iZ])}</div>
+    </div>
+    ${el[iZ]===2?`<div class="panel-section"><h3>The Janet question</h3><div style="font-size:13px;color:var(--text)">In Mendeleev's table, Helium sits with Neon, Argon, Krypton — the noble gases. In Janet's geometric table, Helium sits with <strong style="color:${CAT_TEXT['alkaline']}">Beryllium, Magnesium, Calcium</strong> — the alkaline earths. Both have complete s² subshells. Which family does Helium truly belong to? Kintsugi Physics argues the orbital geometry is the deeper truth.</div></div>`:''}
+  `;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closePanel(e){
+  if(e&&e.target!==document.getElementById('overlay')) return;
+  document.getElementById('overlay').classList.remove('open');
+  if(selectedCell){selectedCell.classList.remove('selected');selectedCell=null;}
+}
+
+// ── INIT ──
+buildTrad();
+buildGeom();
+buildLegend();
+buildPhysicists('trad');
+</script>
+
+<script>
+document.querySelector('.seam-cta').addEventListener('click', () => {
+  setView('geom');
+  document.querySelector('.toggle-zone').scrollIntoView({behavior:'smooth', block:'center'});
+});
+</script>
+
+</body>
+</html>

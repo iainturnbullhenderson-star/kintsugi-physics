@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kintsugi Physics — Module 03: Kepler's Ghosts</title>
+<style>
+:root{--black:#04050a;--deep:#08090f;--surf:#0f1018;--surf2:#161822;
+--gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,.25);
+--text:#bbb8b0;--text2:#6a6660;--bright:#ede8df;
+--blue:#5b8abf;--teal:#4da8a0;--coral:#c4714a;--violet:#8875c4;
+--serif:Georgia,'Times New Roman',serif;--sans:'Trebuchet MS',system-ui,sans-serif;--mono:'Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+.mod-header{padding:2.5rem 2rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.08);max-width:1100px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.75rem}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;color:var(--bright)}
+h1 em{font-style:italic;color:var(--gold2)}
+.provocation{font-family:var(--serif);font-style:italic;color:var(--text2);font-size:1rem;margin-top:.5rem}
+
+.main-layout{display:grid;grid-template-columns:440px 1fr;gap:0;max-width:1100px;margin:0 auto;min-height:80vh}
+@media(max-width:860px){.main-layout{grid-template-columns:1fr}}
+
+/* ── CANVAS COLUMN ── */
+.canvas-col{padding:1.5rem;background:var(--deep);border-right:1px solid rgba(201,168,76,.08);display:flex;flex-direction:column;gap:.75rem}
+@media(max-width:860px){.canvas-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.08)}}
+.canvas-wrap{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:6px;overflow:hidden;border:1px solid rgba(201,168,76,.12);cursor:grab}
+.canvas-wrap:active{cursor:grabbing}
+canvas{display:block;width:100%;height:100%}
+
+.solid-btns{display:flex;flex-wrap:wrap;gap:.4rem}
+.solid-btn{padding:.4rem .75rem;background:none;border:1px solid rgba(201,168,76,.15);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.solid-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.solid-btn.active{background:rgba(201,168,76,.12);border-color:var(--gold-dim);color:var(--gold2)}
+.solid-btn.nest-btn{border-color:rgba(136,117,196,.3);color:var(--violet)}
+.solid-btn.nest-btn.active{background:rgba(136,117,196,.12);color:var(--violet)}
+
+/* Info panel */
+.info-panel{background:var(--surf);border:1px solid rgba(201,168,76,.1);border-radius:6px;padding:1rem;font-size:.8rem;min-height:120px}
+.info-panel h3{font-family:var(--mono);font-size:.6rem;letter-spacing:.3em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.info-row{display:flex;gap:.5rem;margin:.25rem 0;color:var(--text);line-height:1.5}
+.info-label{font-family:var(--mono);font-size:.65rem;color:var(--text2);min-width:70px;flex-shrink:0}
+.info-val{font-size:.8rem;color:var(--text);line-height:1.5}
+.info-val.highlight{color:var(--gold2)}
+.info-quantum{margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.15);font-size:.75rem;color:var(--teal);line-height:1.65;font-family:var(--serif);font-style:italic}
+
+/* ── NARRATIVE ── */
+.narr-col{padding:2rem 2.5rem;overflow-y:auto}
+.narr-stage{padding:2rem 0;border-bottom:1px solid rgba(201,168,76,.06)}
+.narr-stage:last-child{border:none}
+.stage-num{font-family:var(--mono);font-size:.6rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.75rem}
+.narr-stage h2{font-family:var(--serif);font-size:clamp(1.2rem,2.2vw,1.6rem);font-weight:400;color:var(--bright);margin-bottom:1rem;line-height:1.3}
+.narr-stage h2 em{font-style:italic;color:var(--gold2)}
+.narr-stage p{font-size:.9rem;line-height:1.85;color:var(--text);max-width:52ch;margin-bottom:.8rem}
+.narr-stage p em{font-style:italic;color:var(--bright)}
+.narr-stage p strong{font-weight:400;color:var(--gold2)}
+
+.kintsugi-box{background:rgba(201,168,76,.05);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:1rem 1.25rem;margin:1rem 0}
+.kintsugi-box p{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--bright);margin:0;line-height:1.7}
+
+/* ── SHELL DIAGRAM ── */
+.shells-section{padding:2.5rem 2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08)}
+.section-eyebrow{font-family:var(--mono);font-size:.6rem;letter-spacing:.4em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.section-title{font-family:var(--serif);font-size:1.4rem;font-weight:400;color:var(--bright);margin-bottom:1.5rem}
+.shells-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+.shell-card{background:var(--surf2);border:1px solid rgba(201,168,76,.1);border-radius:8px;padding:1.25rem;text-align:center;transition:border-color .3s}
+.shell-card:hover{border-color:var(--gold-dim)}
+.shell-n{font-family:var(--serif);font-size:2rem;color:var(--gold2);margin-bottom:.25rem}
+.shell-electrons{font-family:var(--mono);font-size:.7rem;color:var(--teal);letter-spacing:.15em;margin-bottom:.5rem}
+.shell-capacity{font-family:var(--mono);font-size:1.4rem;color:var(--bright);margin-bottom:.25rem}
+.shell-formula{font-family:var(--mono);font-size:.6rem;color:var(--text2)}
+.shell-solid{font-size:.8rem;color:var(--text);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(201,168,76,.08);line-height:1.5}
+
+/* ── PHYSICIST + NAV ── */
+.physicist-section{padding:2rem;max-width:1100px;margin:0 auto}
+.physicist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin-top:1rem}
+.ph-card{background:var(--surf2);border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.25rem}
+.ph-name{font-family:var(--serif);font-size:1rem;color:var(--gold2);margin-bottom:.15rem}
+.ph-dates{font-family:var(--mono);font-size:.6rem;color:var(--text2);letter-spacing:.15em;margin-bottom:.5rem}
+.ph-text{font-size:.78rem;color:var(--text);line-height:1.6}
+.ph-kintsugi{font-family:var(--mono);font-size:.65rem;color:var(--teal);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(77,168,160,.15)}
+
+.module-nav{display:flex;justify-content:space-between;padding:2rem;max-width:1100px;margin:0 auto;border-top:1px solid rgba(201,168,76,.08);font-family:var(--mono);font-size:.7rem}
+.module-nav a{color:var(--text2);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:1px}
+.module-nav a:hover{color:var(--gold2)}
+</style>
+</head>
+<body>
+
+<div class="mod-header">
+  <div class="eyebrow">Kintsugi Physics · Module 03 of VII</div>
+  <h1>Kepler's <em>Ghosts</em></h1>
+  <div class="provocation">He tried to fit the cosmos into nested geometric solids. He was four hundred years early.</div>
+</div>
+
+<div class="main-layout">
+  <div class="canvas-col">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="cv" width="800" height="800"></canvas>
+    </div>
+    <div class="solid-btns" id="solidBtns"></div>
+    <div class="info-panel" id="infoPanel">
+      <h3>Select a solid or toggle Nest All</h3>
+      <div style="color:var(--text2);font-size:.75rem;margin-top:.5rem">Click a Platonic solid to explore. Drag the canvas to rotate. Five shapes — the only regular polyhedra possible in three dimensions.</div>
+    </div>
+  </div>
+
+  <div class="narr-col">
+    <div class="narr-stage">
+      <div class="stage-num">1596 · Mysterium Cosmographicum</div>
+      <h2>Five shapes.<br><em>The universe allows no others.</em></h2>
+      <p>There are exactly five Platonic solids — convex polyhedra where every face is an identical regular polygon and every vertex looks the same. Euclid proved this around 300 BCE. The proof is topological: it falls out of Euler's formula for polyhedra, <em>V − E + F = 2</em>.</p>
+      <p>Johannes Kepler, aged 25, proposed something audacious: these five shapes, nested inside each other, determine the spacing of the six known planets. He published this as <em>Mysterium Cosmographicum</em> in 1596. The fit was close enough to be thrilling. Close enough to be wrong.</p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The beautiful mistake</div>
+      <h2>Kepler's model failed.<br><em>His instinct did not.</em></h2>
+      <p>The actual planetary orbits are ellipses — Kepler himself proved this later in his <em>Astronomia Nova</em> (1609). The nested solids didn't fit. He abandoned the model.</p>
+      <p>But the core idea — that <em>the geometry of space constrains what physics is possible</em> — turns out to be correct at a scale Kepler couldn't have imagined. Not planets. <strong>Atoms.</strong></p>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The ghost in the crystal</div>
+      <h2>Octahedral symmetry<br><em>splits the d-orbitals.</em></h2>
+      <p>Place a transition metal atom at the centre of six ligands arranged as an octahedron. The five d-orbitals — which are degenerate (equal energy) in free space — split into two groups: <em>t₂g</em> (three orbitals) and <em>eg</em> (two orbitals).</p>
+      <p>The splitting is determined entirely by the <em>symmetry group of the octahedron</em>. Change the geometry to a tetrahedron, and the splitting reverses. The geometry dictates which electronic states are allowed.</p>
+      <div class="kintsugi-box"><p>"This is Kepler's ghost. He proposed that geometry constrains planetary orbits. He was wrong about planets. He was right about everything else. Octahedral, tetrahedral, icosahedral symmetry groups constrain electron orbitals, molecular shapes, crystal structures, quasicrystals. The Platonic solids are not arbitrary. They are the only possible symmetries."</p></div>
+    </div>
+
+    <div class="narr-stage">
+      <div class="stage-num">The Kintsugi seam</div>
+      <h2>Why only <em>five?</em></h2>
+      <p>The fact that there are exactly five Platonic solids is a <em>topological</em> constraint — it follows from the Euler characteristic of the sphere. This is the same kind of constraint that limits the number of stable particle types in quantum field theory.</p>
+      <p>Kintsugi Physics proposes: the limited number of stable topological configurations (Module 02) is <em>the same kind of argument</em> as the limited number of Platonic solids. Topology constrains geometry. Geometry constrains physics. Physics produces the mass spectrum.</p>
+      <p class="dim" style="color:var(--text2)">The golden seam in Kepler's broken model: geometry doesn't constrain planetary orbits. It constrains something deeper — the possible states of matter itself.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SHELL DIAGRAM -->
+<div class="shells-section">
+  <div class="section-eyebrow">Quantum shells as geometric constraints</div>
+  <div class="section-title">2n² electrons per shell — geometry hiding in the numbers</div>
+  <div class="shells-grid" id="shellsGrid"></div>
+</div>
+
+<!-- PHYSICISTS -->
+<div class="physicist-section">
+  <div class="section-eyebrow">Voices behind this seam</div>
+  <div class="physicist-grid" id="physGrid"></div>
+</div>
+
+<div class="module-nav">
+  <a href="01-two-tables.html">← Module 01: The Two Tables</a>
+  <a href="02-frozen-universe.html">← Module 02: The Frozen Universe</a>
+  <a href="04-flemings-geometry.html">Module 04: Fleming's Geometry →</a>
+</div>
+
+<script>
+// ═══════════════════════════
+// PLATONIC SOLIDS + 3D ENGINE
+// ═══════════════════════════
+const PHI = (1 + Math.sqrt(5)) / 2;
+const TAU = Math.PI * 2;
+
+function normalize(verts) {
+  return verts.map(v => {
+    const r = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+    return [v[0]/r, v[1]/r, v[2]/r];
+  });
+}
+
+function computeEdges(verts) {
+  const pairs = [];
+  for (let i = 0; i < verts.length; i++) {
+    for (let j = i+1; j < verts.length; j++) {
+      const dx=verts[i][0]-verts[j][0], dy=verts[i][1]-verts[j][1], dz=verts[i][2]-verts[j][2];
+      pairs.push({i,j,d:Math.sqrt(dx*dx+dy*dy+dz*dz)});
+    }
+  }
+  pairs.sort((a,b) => a.d - b.d);
+  const el = pairs[0].d;
+  return pairs.filter(e => e.d < el * 1.05).map(e => [e.i, e.j]);
+}
+
+const SOLIDS = [
+  { id:'octahedron', name:'Octahedron', nestR:0.3, color:'#5b8abf',
+    F:8,V:6,E:12, plato:'Air', kepler:'Innermost — between Mercury & Venus',
+    quantum:'p-orbital axes. In octahedral crystal fields, d-orbitals split into t₂g (3) and eg (2) — the geometry dictates electronic structure.',
+    group:'Oh (order 48)',
+    verts: normalize([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
+  },
+  { id:'icosahedron', name:'Icosahedron', nestR:0.48, color:'#4da8a0',
+    F:20,V:12,E:30, plato:'Water', kepler:'Between Venus & Earth',
+    quantum:'Icosahedral symmetry appears in C₆₀ fullerene, quasicrystals, and viral capsids. 12 vertices = 12 pentagonal faces of its dual dodecahedron.',
+    group:'Ih (order 120)',
+    verts: normalize([[0,1,PHI],[0,1,-PHI],[0,-1,PHI],[0,-1,-PHI],[1,PHI,0],[1,-PHI,0],[-1,PHI,0],[-1,-PHI,0],[PHI,0,1],[PHI,0,-1],[-PHI,0,1],[-PHI,0,-1]])
+  },
+  { id:'dodecahedron', name:'Dodecahedron', nestR:0.65, color:'#8875c4',
+    F:12,V:20,E:30, plato:'Aether / Cosmos', kepler:'Between Earth & Mars',
+    quantum:'Dual of icosahedron. 12 pentagonal faces relate to the golden ratio. Penrose tilings (aperiodic, quasicrystalline) arise from dodecahedral projection from higher dimensions.',
+    group:'Ih (order 120 — dual shares symmetry group)',
+    verts: normalize((function(){
+      const v=[], c=1/PHI;
+      for(const a of[-1,1])for(const b of[-1,1])for(const d of[-1,1])v.push([a,b,d]);
+      for(const a of[-1,1])for(const b of[-1,1]){v.push([0,a*c,b*PHI]);v.push([a*c,b*PHI,0]);v.push([a*PHI,0,b*c]);}
+      return v;
+    })())
+  },
+  { id:'tetrahedron', name:'Tetrahedron', nestR:0.82, color:'#c4714a',
+    F:4,V:4,E:6, plato:'Fire', kepler:'Between Mars & Jupiter',
+    quantum:'Simplest polyhedron. Tetrahedral crystal fields reverse the d-orbital splitting compared to octahedral. sp³ carbon hybridisation: four bonds pointing to tetrahedron vertices.',
+    group:'Td (order 24)',
+    verts: normalize([[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]])
+  },
+  { id:'cube', name:'Cube (Hexahedron)', nestR:1.0, color:'#e8c97a',
+    F:6,V:8,E:12, plato:'Earth', kepler:'Outermost — between Jupiter & Saturn',
+    quantum:'Most common crystal structure: FCC, BCC. 8 vertices = 8 electrons in the second quantum shell. Dual of the octahedron — same symmetry group Oh.',
+    group:'Oh (order 48 — dual of octahedron)',
+    verts: normalize((function(){const v=[];for(const a of[-1,1])for(const b of[-1,1])for(const c of[-1,1])v.push([a,b,c]);return v;})())
+  },
+];
+
+// Compute edges for each solid
+SOLIDS.forEach(s => { s.edges = computeEdges(s.verts); });
+
+// ── 3D PROJECTION ──
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+let rotX = 0.3, rotY = 0.5;
+let autoRot = true;
+let selected = null;
+let nestMode = false;
+
+function project(vx, vy, vz, scale) {
+  // Rotate Y
+  let x = vx*Math.cos(rotY) - vz*Math.sin(rotY);
+  let z = vx*Math.sin(rotY) + vz*Math.cos(rotY);
+  let y = vy;
+  // Rotate X
+  const y2 = y*Math.cos(rotX) - z*Math.sin(rotX);
+  const z2 = y*Math.sin(rotX) + z*Math.cos(rotX);
+  y = y2; z = z2;
+  const fov = 4;
+  const p = fov / (fov + z);
+  return { x: W/2 + x*scale*p, y: H/2 + y*scale*p, z, p };
+}
+
+function drawSolid(solid, highlight, scale) {
+  const verts = solid.verts;
+  const edges = solid.edges;
+  const R = scale * solid.nestR;
+  const projected = verts.map(v => project(v[0], v[1], v[2], R));
+
+  // Sort edges by average depth for back-to-front
+  const sortedEdges = edges.map(([i,j]) => ({i,j, z:(projected[i].z+projected[j].z)/2}));
+  sortedEdges.sort((a,b) => a.z - b.z);
+
+  for (const {i,j,z} of sortedEdges) {
+    const depthFade = Math.max(0.15, Math.min(1, 0.6 - z*0.3));
+    const alpha = highlight ? depthFade : depthFade * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(projected[i].x, projected[i].y);
+    ctx.lineTo(projected[j].x, projected[j].y);
+    ctx.strokeStyle = solid.color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = highlight ? 2 : 0.8;
+    ctx.stroke();
+  }
+
+  // Vertices
+  if (highlight) {
+    for (const p of projected) {
+      const depthFade = Math.max(0.2, Math.min(1, 0.7 - p.z*0.25));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, highlight ? 3 : 1.5, 0, TAU);
+      ctx.fillStyle = solid.color;
+      ctx.globalAlpha = depthFade;
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  const baseScale = 280;
+
+  if (nestMode) {
+    // Draw all solids nested
+    for (const s of SOLIDS) {
+      drawSolid(s, true, baseScale);
+    }
+  } else if (selected !== null) {
+    // Draw selected solid large
+    const s = SOLIDS[selected];
+    drawSolid(s, true, baseScale / s.nestR);
+    // Draw others very faintly at nest scale
+    for (let i = 0; i < SOLIDS.length; i++) {
+      if (i !== selected) drawSolid(SOLIDS[i], false, baseScale);
+    }
+  } else {
+    // Draw all nested, all dim
+    for (const s of SOLIDS) drawSolid(s, false, baseScale);
+  }
+
+  // Center label
+  if (nestMode) {
+    ctx.fillStyle = '#e8c97a';
+    ctx.globalAlpha = 0.4;
+    ctx.font = '11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('MYSTERIUM COSMOGRAPHICUM · 1596', W/2, H - 30);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function animate() {
+  if (autoRot) { rotY += 0.004; rotX += 0.001; }
+  render();
+  requestAnimationFrame(animate);
+}
+
+// ── MOUSE/TOUCH ROTATION ──
+let dragging = false, lastX = 0, lastY = 0;
+const wrap = document.getElementById('canvasWrap');
+wrap.addEventListener('pointerdown', e => { dragging=true; lastX=e.clientX; lastY=e.clientY; autoRot=false; wrap.setPointerCapture(e.pointerId); });
+wrap.addEventListener('pointermove', e => { if(!dragging)return; rotY+=(e.clientX-lastX)*0.008; rotX+=(e.clientY-lastY)*0.008; lastX=e.clientX; lastY=e.clientY; });
+wrap.addEventListener('pointerup', () => { dragging=false; setTimeout(()=>{autoRot=true;},3000); });
+
+// ── UI: BUTTONS ──
+const btnContainer = document.getElementById('solidBtns');
+SOLIDS.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'solid-btn';
+  btn.textContent = s.name.split(' ')[0];
+  btn.style.borderColor = s.color + '44';
+  btn.addEventListener('click', () => {
+    selected = (selected === i) ? null : i;
+    nestMode = false;
+    document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
+    if (selected !== null) { btn.classList.add('active'); showInfo(s); }
+    else { document.getElementById('infoPanel').innerHTML = '<h3>Select a solid or toggle Nest All</h3>'; }
+    document.querySelector('.nest-btn')?.classList.remove('active');
+  });
+  btnContainer.appendChild(btn);
+});
+// Nest all button
+const nestBtn = document.createElement('button');
+nestBtn.className = 'solid-btn nest-btn';
+nestBtn.textContent = 'Nest All';
+nestBtn.addEventListener('click', () => {
+  nestMode = !nestMode; selected = null;
+  document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
+  if (nestMode) { nestBtn.classList.add('active'); showNestInfo(); }
+  else { document.getElementById('infoPanel').innerHTML = '<h3>Select a solid</h3>'; }
+});
+btnContainer.appendChild(nestBtn);
+
+function showInfo(s) {
+  document.getElementById('infoPanel').innerHTML = `
+    <h3 style="color:${s.color}">${s.name}</h3>
+    <div class="info-row"><span class="info-label">Geometry</span><span class="info-val">${s.F} faces · ${s.V} vertices · ${s.E} edges</span></div>
+    <div class="info-row"><span class="info-label">Plato</span><span class="info-val">${s.plato}</span></div>
+    <div class="info-row"><span class="info-label">Kepler</span><span class="info-val">${s.kepler}</span></div>
+    <div class="info-row"><span class="info-label">Symmetry</span><span class="info-val highlight">${s.group}</span></div>
+    <div class="info-quantum">${s.quantum}</div>
+  `;
+}
+function showNestInfo() {
+  document.getElementById('infoPanel').innerHTML = `
+    <h3 style="color:var(--violet)">Mysterium Cosmographicum</h3>
+    <div style="font-size:.78rem;color:var(--text);line-height:1.65;margin-top:.5rem">Kepler's 1596 model: the five Platonic solids nested between six planetary orbits. The outermost cube holds Saturn's sphere; the innermost octahedron holds Mercury's.</div>
+    <div class="info-quantum">The nesting order — octahedron, icosahedron, dodecahedron, tetrahedron, cube — is topological, not arbitrary. Each solid's inscribed and circumscribed sphere radii determine the gaps. Kepler's ratios were close to the actual planetary spacings. Close enough to be haunting.</div>
+  `;
+}
+
+// ── SHELL DIAGRAM ──
+const SHELLS = [
+  {n:1, cap:2, formula:'2(1)²', orbitals:'1s', solid:'Sphere (trivial symmetry)', note:'The simplest shell. One orbital, two electrons. No angular momentum — pure spherical symmetry.'},
+  {n:2, cap:8, formula:'2(2)²', orbitals:'2s + 2p', solid:'Cube/Octahedron (Oh)', note:'8 electrons = 8 vertices of a cube. Three p-orbitals align with octahedral axes (x,y,z).'},
+  {n:3, cap:18, formula:'2(3)²', orbitals:'3s + 3p + 3d', solid:'Icosahedron/Dodecahedron (Ih)', note:'Five d-orbitals add complex geometry. Icosahedral symmetry appears in transition metal clusters.'},
+  {n:4, cap:32, formula:'2(4)²', orbitals:'4s + 4p + 4d + 4f', solid:'Full polyhedral hierarchy', note:'Seven f-orbitals: the most complex angular momentum states in the standard table. All five Platonic symmetry groups are needed.'},
+];
+const sg = document.getElementById('shellsGrid');
+SHELLS.forEach(s => {
+  const card = document.createElement('div');
+  card.className = 'shell-card';
+  card.innerHTML = `<div class="shell-n">n = ${s.n}</div><div class="shell-electrons">${s.orbitals}</div><div class="shell-capacity">${s.cap} electrons</div><div class="shell-formula">${s.formula}</div><div class="shell-solid">${s.solid}<br><span style="color:var(--text2);font-size:.72rem">${s.note}</span></div>`;
+  sg.appendChild(card);
+});
+
+// ── PHYSICISTS ──
+const PHYS = [
+  {name:'Johannes Kepler',dates:'1571–1630',text:'Proposed in Mysterium Cosmographicum that the five Platonic solids, nested between planetary orbits, explain the solar system\'s geometry. Wrong about planets — but the idea that topology constrains physics was correct.', k:'His instinct survives in crystal field theory, molecular symmetry, and Kintsugi field topology.'},
+  {name:'Plato',dates:'c.428–348 BCE',text:'Associated each solid with an element: tetrahedron=fire, cube=earth, octahedron=air, icosahedron=water, dodecahedron=the cosmos itself. Argued that geometry underlies all physical reality.', k:'"God ever geometrises." The Platonic solids are not metaphors. They are the only possible regular symmetries in 3D — a topological fact.'},
+  {name:'Werner Heisenberg',dates:'1901–1976',text:'Developed matrix mechanics and the symmetry-group approach to quantum theory. The representation theory of rotation groups (SO(3), SU(2)) explains WHY shells have 2n² electrons.', k:'The Platonic symmetry groups are subgroups of SO(3). Orbital physics IS group theory IS geometry.'},
+  {name:'Kintsugi Physics',dates:'2024–',text:'Proposes that the limited number of stable particle types arises from the same kind of topological constraint as the limited number of Platonic solids: geometry restricts what is possible.', k:'Five solids. Five forces? The constraint is topological. The question is whether the topology of field space produces the same kind of finiteness.'},
+];
+const pg = document.getElementById('physGrid');
+PHYS.forEach(p => {
+  const c = document.createElement('div'); c.className='ph-card';
+  c.innerHTML=`<div class="ph-name">${p.name}</div><div class="ph-dates">${p.dates}</div><div class="ph-text">${p.text}</div><div class="ph-kintsugi">${p.k}</div>`;
+  pg.appendChild(c);
+});
+
+// ── START ──
+animate();
+</script>
+</body>
+</html>

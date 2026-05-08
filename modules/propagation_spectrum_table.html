@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e8e4d9; font-family: 'EB Garamond', serif; padding: 32px; }
+  .title-block { text-align: center; margin-bottom: 28px; }
+  .main-title { font-size: 22px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #e8e4d9; margin-bottom: 6px; }
+  .sub-title { font-size: 13px; font-style: italic; color: #8a8070; letter-spacing: 0.05em; }
+  .sigma-bar { margin: 16px auto 0; height: 3px; max-width: 600px; background: linear-gradient(to right, #8b00ff, #0000ff, #00aaff, #00ff88, #ffff00, #ff6600, #cc0000); border-radius: 2px; opacity: 0.6; }
+  .equation-block { margin: 24px auto; max-width: 640px; background: #0d0d15; border: 1px solid #2a2a4a; border-radius: 4px; padding: 18px 24px; text-align: center; }
+  .eq-label { font-family: 'Courier Prime', monospace; font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: block; }
+  .eq-main { font-family: 'Courier Prime', monospace; font-size: 15px; color: #f5c842; }
+  .eq-desc { font-family: 'EB Garamond', serif; font-size: 11px; font-style: italic; color: #6a6060; margin-top: 10px; line-height: 1.6; }
+  table { width: 100%; border-collapse: collapse; font-family: 'Courier Prime', monospace; font-size: 11px; }
+  .h-region { padding: 12px 8px; text-align: center; font-family: 'EB Garamond', serif; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid #2a2a3a; }
+  .col-label { background: transparent; border: none; width: 115px; }
+  .col-loren { background: #0d1f3c; color: #5ba3f5; border-color: #1e3a6e; }
+  .col-grad  { background: #1f1a0d; color: #f5c842; border-color: #5a4a1a; }
+  .col-eucl  { background: #1a0d0d; color: #f56b5b; border-color: #5a1e1e; }
+  .subh { font-size: 9px; font-family: 'Courier Prime', monospace; color: #555; font-style: italic; padding: 4px 8px 8px; text-align: center; border: 1px solid #1a1a2a; }
+  .subh-l { background: #070c18; } .subh-g { background: #0e0b04; } .subh-e { background: #0c0707; }
+  .wave-label { padding: 0; border: 1px solid #2a2a3a; vertical-align: middle; }
+  .wave-inner { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+  .wave-swatch { width: 7px; height: 52px; border-radius: 3px; flex-shrink: 0; }
+  .wave-name { font-family: 'EB Garamond', serif; font-size: 14px; font-weight: 700; color: #e8e4d9; display: block; line-height: 1.2; }
+  .wave-range { font-family: 'Courier Prime', monospace; font-size: 9px; color: #555; display: block; margin-top: 2px; }
+  .wave-scale { font-family: 'EB Garamond', serif; font-size: 10px; font-style: italic; color: #7a7060; display: block; margin-top: 1px; }
+  .cell { padding: 9px 10px; border: 1px solid #222230; vertical-align: top; line-height: 1.4; }
+  .cell-loren { background: #070d1a; } .cell-grad { background: #0d0b04; } .cell-eucl { background: #0d0707; }
+  .cell-main { font-size: 10.5px; color: #b8b4a9; margin-bottom: 5px; display: block; }
+  .cell-pred { font-size: 9px; font-style: italic; color: #555; display: block; border-top: 1px solid #222; padding-top: 4px; margin-top: 4px; }
+  .tag { display: inline-block; font-size: 7.5px; font-family: 'Courier Prime', monospace; padding: 1px 5px; border-radius: 2px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+  .tag-obs  { background: #0d2a0d; color: #4fc94f; border: 1px solid #1a5a1a; }
+  .tag-pred { background: #2a1a0d; color: #f5a442; border: 1px solid #5a3a1a; }
+  .tag-arch { background: #0d1a2a; color: #42a4f5; border: 1px solid #1a3a5a; }
+  .tag-kill { background: #2a0d0d; color: #f55b5b; border: 1px solid #5a1a1a; }
+  .legend { display: flex; gap: 18px; margin-top: 22px; justify-content: center; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #555; font-family: 'Courier Prime', monospace; }
+  .footer { text-align: center; margin-top: 22px; font-family: 'Courier Prime', monospace; font-size: 9px; color: #333; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+
+<div class="title-block">
+  <div class="main-title">The Propagation Spectrum of Spacetime</div>
+  <div class="sub-title">Figure 1 — Characteristic coupling signatures across metric phase regions &nbsp;|&nbsp; Henderson 2026</div>
+  <div class="sigma-bar"></div>
+</div>
+
+<div class="equation-block">
+  <span class="eq-label">Phenomenological Model (Proposed — Derivation Pending)</span>
+  <div class="eq-main">Δ(νᵢ/νⱼ) / (νᵢ/νⱼ) &nbsp;=&nbsp; (αᵢ − αⱼ) ∫ |∇φ| ds</div>
+  <div class="eq-desc">
+    φ(x): metric-character field &nbsp;·&nbsp; φ=1 fully Lorentzian &nbsp;·&nbsp; φ=0 fully Euclidean<br>
+    ∇φ: metric phase gradient &nbsp;·&nbsp; αᵢ: wavelength-dependent coupling coefficient<br>
+    Gravitational redshift cancels. Differential metric coupling remains and is measurable.
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="h-region col-label"></th>
+      <th class="h-region col-loren">Lorentzian Region<br><small style="font-weight:400;font-size:10px;opacity:0.7">(φ → 1)</small></th>
+      <th class="h-region col-grad">Metric Phase Gradient<br><small style="font-weight:400;font-size:10px;opacity:0.7">(∇φ ≠ 0)</small></th>
+      <th class="h-region col-eucl">Euclidean Region<br><small style="font-weight:400;font-size:10px;opacity:0.7">(φ → 0)</small></th>
+    </tr>
+    <tr>
+      <td class="subh col-label"></td>
+      <td class="subh subh-l">Normal space · Full dynamics · Absorbs &amp; emits</td>
+      <td class="subh subh-g">Corona · CGM virial radius · Void boundary shell</td>
+      <td class="subh subh-e">Void interior · Dark matter · Frozen topology</td>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(#cc00ff,#8800cc)"></div>
+        <div><span class="wave-name">γ Gamma</span><span class="wave-range">&lt;0.01 nm</span><span class="wave-scale">Deep spacetime fabric</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Near-pure propagation. Barely couples to normal matter at standard energies.</span><span class="cell-pred">Standard GR — transparent to baryonic structure</span></td>
+      <td class="cell cell-grad"><span class="cell-main">Direct coupling to boundary geometry. Energy exchange at deepest spacetime level.</span><span class="cell-pred">GRB 221009A multi-TeV survival anomaly</span><span class="tag tag-obs">observed anomaly</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">No coupling mechanism. Pure pass-through or absorption. No emission response.</span><span class="cell-pred">Euclidean geometry has no gamma-emitting dynamics</span></td>
+    </tr>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(#4488ff,#2244cc)"></div>
+        <div><span class="wave-name">X-ray</span><span class="wave-range">0.01–10 nm</span><span class="wave-scale">Nuclear proximity</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Couples to nuclear proximity. Differential absorption by density — bone vs tissue, core vs envelope.</span><span class="cell-pred">Standard X-ray opacity — established physics</span></td>
+      <td class="cell cell-grad"><span class="cell-main">Boundary stress tensor produces enhanced X-ray emission at gradient shell. Gradient work released at nuclear scale.</span><span class="cell-pred">eROSITA: CGM boundary shell excess correlated with void proximity</span><span class="tag tag-pred">prediction</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">Absorption only. No nuclear dynamics in frozen topology — no X-ray emission from void interiors.</span><span class="cell-pred">Void interiors X-ray quiet relative to boundary</span></td>
+    </tr>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(#8855ff,#5522cc)"></div>
+        <div><span class="wave-name">UV</span><span class="wave-range">10–400 nm</span><span class="wave-scale">Bond breaking energy</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Breaks molecular bonds. Ozone absorption — atmosphere is a natural propagation filter at UV scale.</span><span class="cell-pred">Standard photochemistry — established physics</span></td>
+      <td class="cell cell-grad"><span class="cell-main">Polarisation rotation within gradient. OVI coupling anomaly at CGM virial radius boundary shell.</span><span class="cell-pred">COS-Halos: ~20% OVI not in thermal equilibrium · virial radius transition confirmed</span><span class="tag tag-obs">observed anomaly</span> <span class="tag tag-pred">prediction</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">Passes through with minimal interaction. No bond-breaking dynamics in frozen Euclidean topology.</span><span class="cell-pred">UV-transparent void interiors</span></td>
+    </tr>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(to bottom,#ff2200,#ff8800,#ffff00,#00ff44,#0088ff,#4400ff)"></div>
+        <div><span class="wave-name">Visible</span><span class="wave-range">400–700 nm</span><span class="wave-scale">Electron shell topology</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Couples to electron shell transitions. Emission spectra as geometric fingerprints of topological knot structure.</span><span class="cell-pred">Fraunhofer lines, atomic spectroscopy — established physics</span></td>
+      <td class="cell cell-grad"><span class="cell-main">Geometric redirection with subtle chromatic dispersion. Achromatic at current precision — chromatic at Roman resolution.</span><span class="cell-pred">Roman Space Telescope: chromatic lensing at 1.0–1.5 R_eff void boundary</span><span class="tag tag-pred">prediction</span> <span class="tag tag-kill">falsification test</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">No electron shell dynamics. Visible passes through — confirming traversable gradient and hyperbolic wave equation.</span><span class="cell-pred">Background galaxies visible through voids — observed confirmation of gradient boundary</span><span class="tag tag-obs">confirmed</span></td>
+    </tr>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(#ff5500,#cc2200)"></div>
+        <div><span class="wave-name">Infrared</span><span class="wave-range">0.7–1000 μm</span><span class="wave-scale">Molecular bond geometry</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Couples to molecular rotation and vibration. Heats matter by shaking bond structures. Most bodily felt wavelength.</span><span class="cell-pred">Thermal emission, greenhouse effect — established physics</span></td>
+      <td class="cell cell-grad"><span class="cell-main">First differential Fraunhofer shift — IR line ratios encode metric character at molecular scale before UV does.</span><span class="cell-pred">DKIST: Ca II H / Hε anomaly (April 2026). IR ratio height profile earlier than UV profile.</span><span class="tag tag-obs">DKIST 2026</span> <span class="tag tag-pred">prediction</span> <span class="tag tag-kill">falsification test</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">No molecular dynamics in frozen topology. Infrared passes through — anomalous cold transparency in void interiors.</span><span class="cell-pred">Void thermal deficit — cooler than baryonic content predicts</span></td>
+    </tr>
+
+    <tr>
+      <td class="wave-label"><div class="wave-inner">
+        <div class="wave-swatch" style="background:linear-gradient(#bb3300,#882200)"></div>
+        <div><span class="wave-name">Radio</span><span class="wave-range">&gt;1 mm</span><span class="wave-scale">Large conducting structures</span></div>
+      </div></td>
+      <td class="cell cell-loren"><span class="cell-main">Vast slow coherent reorganisation. Couples only to large conducting structures. Passes through walls, weather, galaxies.</span><span class="cell-pred">Standard radio propagation — established physics</span></td>
+      <td class="cell cell-grad"><span class="cell-main">Partial reflection. Anomalous radio brightness at boundary shell — from boundary geometry, not point sources.</span><span class="cell-pred">ARCADE 2 radio excess / 21cm boundary anomalies · LOFAR ASKAP stacking</span><span class="tag tag-obs">observed anomaly</span> <span class="tag tag-arch">archival test</span></td>
+      <td class="cell cell-eucl"><span class="cell-main">Total reflection or exponential decay near hard boundary limit. Radio-quiet void interiors relative to boundary shell.</span><span class="cell-pred">21cm void surveys: brightness temperature gradient interior → boundary</span><span class="tag tag-pred">prediction</span></td>
+    </tr>
+
+  </tbody>
+</table>
+
+<div class="legend">
+  <div class="legend-item"><span class="tag tag-obs">observed anomaly</span>&nbsp;anomaly in data, standard explanation contested</div>
+  <div class="legend-item"><span class="tag tag-pred">prediction</span>&nbsp;FTT prediction, not yet tested</div>
+  <div class="legend-item"><span class="tag tag-arch">archival test</span>&nbsp;testable with existing data now</div>
+  <div class="legend-item"><span class="tag tag-kill">falsification test</span>&nbsp;negative result kills framework</div>
+</div>
+
+<div class="footer" style="margin-top:24px">
+  HENDERSON 2026 · FIELD TOPOLOGY THEORY · ORCID 0009-0004-8539-9643 · ZENODO PREPRINT
+</div>
+
+</body>
+</html>
