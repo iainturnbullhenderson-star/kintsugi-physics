@@ -79,9 +79,236 @@ footer{border-top:1px solid rgba(201,168,76,.07);padding:2rem 2rem;max-width:860
 .footer-links{display:flex;gap:1.5rem;flex-wrap:wrap}
 .footer-links a{font-family:var(--mono);font-size:.63rem;color:var(--text2);text-decoration:none;transition:color .2s}
 .footer-links a:hover{color:var(--gold)}
+
+
+/* ── CINEMATIC THRESHOLD ── */
+.threshold {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  min-height: 100vh;
+  background: #020207;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  transition: opacity 1.4s ease, visibility 1.4s ease;
+}
+.threshold.is-dismissed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.threshold-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(2,2,7,.92) 0%, rgba(2,2,7,.48) 38%, rgba(2,2,7,.18) 58%, rgba(2,2,7,.7) 100%),
+    radial-gradient(circle at 67% 45%, rgba(201,168,76,.16), transparent 36%);
+  filter: saturate(.9) contrast(1.06);
+  transform: scale(1.035);
+  animation: thresholdDrift 26s ease-in-out infinite alternate;
+  overflow: hidden;
+}
+.threshold-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+}
+.threshold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 42%, rgba(0,0,0,.44) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.35), transparent 28%, rgba(0,0,0,.65));
+}
+@keyframes thresholdDrift {
+  from { transform: scale(1.035) translate3d(0,0,0); }
+  to { transform: scale(1.09) translate3d(-1.2%, .7%, 0); }
+}
+.threshold-inner {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 760px);
+  min-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(1.4rem, 4vw, 4rem);
+}
+.threshold-mark {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .42em;
+  text-transform: uppercase;
+  color: rgba(232,201,122,.58);
+  margin-bottom: 2rem;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.threshold.playing .threshold-mark { animation: goldReveal 2.2s ease forwards .4s; }
+.threshold-copy {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 3.6vw, 2.65rem);
+  line-height: 1.28;
+  color: var(--gold2);
+  max-width: 16ch;
+  text-shadow:
+    0 0 10px rgba(232,201,122,.32),
+    0 0 34px rgba(201,168,76,.13);
+}
+.threshold-line {
+  display: block;
+  opacity: 0;
+  filter: blur(5px);
+  transform: translateY(14px);
+  margin: .18em 0;
+}
+.threshold-line.soft-gap { margin-top: .9em; }
+.threshold.playing .threshold-line { animation: goldReveal 2.85s ease forwards; }
+.threshold.playing .line-1 { animation-delay: 1.5s; }
+.threshold.playing .line-2 { animation-delay: 5s; }
+.threshold.playing .line-3 { animation-delay: 8s; }
+.threshold.playing .line-4 { animation-delay: 11.5s; }
+.threshold.playing .line-5 { animation-delay: 15.5s; }
+@keyframes goldReveal {
+  0% { opacity: 0; filter: blur(5px); transform: translateY(14px); }
+  65% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+.threshold-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 2.4rem;
+  opacity: 1;
+  transition: opacity .5s ease, transform .5s ease;
+}
+.threshold.playing .threshold-actions.start-actions {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+.threshold-enter {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+.threshold.playing .threshold-enter {
+  animation: enterReveal 1.4s ease forwards 20s;
+}
+@keyframes enterReveal {
+  to { opacity: 1; transform: translateY(0); pointer-events: auto; }
+}
+.threshold-btn {
+  appearance: none;
+  border: 1px solid rgba(201,168,76,.38);
+  background: rgba(7,8,13,.54);
+  color: var(--gold2);
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  padding: .85rem 1.05rem;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: transform .25s ease, border-color .25s ease, background .25s ease, color .25s ease;
+}
+.threshold-btn:hover { transform: translateY(-2px); border-color: var(--gold2); background: rgba(201,168,76,.12); }
+.threshold-btn.secondary { color: rgba(237,232,223,.72); border-color: rgba(237,232,223,.22); }
+.threshold-btn.ghost {
+  position: absolute;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  font-size: .58rem;
+  opacity: .68;
+}
+.threshold-seam-glow {
+  position: absolute;
+  z-index: 1;
+  right: 22%;
+  top: 43%;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,201,122,.23), rgba(201,168,76,.07) 32%, transparent 68%);
+  opacity: 0;
+  filter: blur(18px);
+  pointer-events: none;
+}
+.threshold.playing .threshold-seam-glow { animation: seamPulse 8s ease-in-out forwards 10.5s; }
+@keyframes seamPulse {
+  0% { opacity: 0; transform: scale(.82); }
+  45% { opacity: .75; transform: scale(1); }
+  100% { opacity: .28; transform: scale(1.15); }
+}
+body.threshold-active nav,
+body.threshold-active .hero,
+body.threshold-active .section,
+body.threshold-active footer,
+body.threshold-active > .gold-rule {
+  visibility: hidden;
+}
+a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline-offset: 4px; }
+@media (max-width: 720px) {
+  .threshold-inner { justify-content: flex-end; min-height: 86vh; align-items: center; text-align: center; }
+  .threshold-copy { max-width: 18ch; }
+  .threshold-actions { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .threshold-bg { animation: none; transform: none; }
+  .threshold-video { display: none; }
+  .threshold-bg {
+    background:
+      linear-gradient(90deg, rgba(2,2,7,.92) 0%, rgba(2,2,7,.48) 38%, rgba(2,2,7,.18) 58%, rgba(2,2,7,.7) 100%),
+      url('kintsugi-scientist-bowl-hero.png') center center / cover no-repeat;
+  }
+}
 </style>
 </head>
-<body>
+<body class="threshold-active">
+
+<section class="threshold" id="threshold" aria-label="Kintsugi Physics opening sequence">
+  <div class="threshold-bg" aria-hidden="true">
+    <video class="threshold-video"
+           autoplay muted loop playsinline preload="auto"
+           poster="kintsugi-scientist-bowl-hero.png">
+      <source src="kintsugi-threshold-video.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="threshold-seam-glow" aria-hidden="true"></div>
+  <div class="threshold-inner">
+    <div class="threshold-mark">Kintsugi Physics</div>
+    <div class="threshold-copy" aria-live="polite">
+      <span class="threshold-line line-1">This bowl was not always broken.</span>
+      <span class="threshold-line line-2 soft-gap">There is a journey in how it came apart —</span>
+      <span class="threshold-line line-3">and another in how it was remade.</span>
+      <span class="threshold-line line-4 soft-gap">Let us follow the golden seams.</span>
+      <span class="threshold-line line-5 soft-gap">Will you let them change something in you?</span>
+    </div>
+    <div class="threshold-actions start-actions" id="thresholdStartActions">
+      <button class="threshold-btn" id="beginVoice" type="button">Begin with voice</button>
+      <button class="threshold-btn secondary" id="beginSilent" type="button">Enter silently</button>
+    </div>
+    <div class="threshold-actions threshold-enter">
+      <button class="threshold-btn" id="enterJourney" type="button">Enter the Journey</button>
+    </div>
+  </div>
+  <button class="threshold-btn ghost" id="skipThreshold" type="button">Skip</button>
+</section>
 
 <nav>
   <a class="nav-brand" href="index.html">Kintsugi Physics</a>
@@ -253,6 +480,68 @@ footer{border-top:1px solid rgba(201,168,76,.07);padding:2rem 2rem;max-width:860
     <a href="https://orcid.org/0009-0004-8539-9643" target="_blank">Contact</a>
   </div>
 </footer>
+
+<script>
+(function(){
+  const body = document.body;
+  const threshold = document.getElementById('threshold');
+  const beginVoice = document.getElementById('beginVoice');
+  const beginSilent = document.getElementById('beginSilent');
+  const enterJourney = document.getElementById('enterJourney');
+  const skipThreshold = document.getElementById('skipThreshold');
+
+  const lines = [
+    { text: 'This bowl was not always broken.', delay: 1500 },
+    { text: 'There is a journey in how it came apart —', delay: 5000 },
+    { text: 'and another in how it was remade.', delay: 8000 },
+    { text: 'Let us follow the golden seams.', delay: 11500 },
+    { text: 'Will you let them change something in you?', delay: 15500 }
+  ];
+
+  function chooseVoice(){
+    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    return voices.find(v => /female|woman|samantha|serena|victoria|karen|moira|tessa|susan|zira/i.test(v.name)) ||
+           voices.find(v => /en-GB|en_US|en-US|en/i.test(v.lang)) ||
+           voices[0];
+  }
+
+  function speakLine(text){
+    if (!('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = chooseVoice();
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.72;
+    utterance.pitch = 0.9;
+    utterance.volume = 0.86;
+    speechSynthesis.speak(utterance);
+  }
+
+  function startSequence(withVoice){
+    threshold.classList.add('playing');
+    if (withVoice && 'speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      if (!speechSynthesis.getVoices().length) {
+        speechSynthesis.onvoiceschanged = () => {};
+      }
+      lines.forEach(line => setTimeout(() => speakLine(line.text), line.delay));
+    }
+  }
+
+  function enterSite(){
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    threshold.classList.add('is-dismissed');
+    body.classList.remove('threshold-active');
+    window.setTimeout(() => {
+      threshold.setAttribute('aria-hidden','true');
+    }, 1400);
+  }
+
+  beginVoice.addEventListener('click', () => startSequence(true));
+  beginSilent.addEventListener('click', () => startSequence(false));
+  enterJourney.addEventListener('click', enterSite);
+  skipThreshold.addEventListener('click', enterSite);
+})();
+</script>
 
 </body>
 </html>
