@@ -266,6 +266,7 @@ body.threshold-active > .gold-rule {
 }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline-offset: 4px; }
 @media (max-width: 720px) {
+  .threshold-video { object-position: 32% center; }
   .threshold-inner { justify-content: flex-end; min-height: 86vh; align-items: center; text-align: center; }
   .threshold-copy { max-width: 18ch; }
   .threshold-actions { justify-content: center; }
@@ -507,21 +508,57 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline
     { text: 'Will you let them change something in you?', delay: 15500 }
   ];
 
+  function scoreVoice(v){
+    const n = (v.name || '').toLowerCase();
+    const l = (v.lang || '').toLowerCase();
+    let s = 0;
+    if (/premium|enhanced/.test(n)) s += 60;
+    if (/wavenet|neural|natural|studio/.test(n)) s += 60;
+    if (/online.*natural|\b(aria|jenny|sonia|libby|emma|olivia)\b/.test(n)) s += 55;
+    if (/\b(ava|zoe|allison|samantha|karen|moira|serena|victoria|tessa|fiona|kate|stephanie|google uk english female)\b/.test(n)) s += 30;
+    if (/female|woman/.test(n)) s += 15;
+    if (v.localService === false) s += 20;
+    if (l.startsWith('en-gb')) s += 12;
+    else if (l.startsWith('en-au') || l.startsWith('en-ie')) s += 8;
+    else if (l.startsWith('en')) s += 6;
+    if (/male|man/.test(n) && !/female|woman/.test(n)) s -= 10;
+    if (/novelty|whisper|bad|silly|trinoids|hysterical|cellos|bubbles/.test(n)) s -= 50;
+    return s;
+  }
+
   function chooseVoice(){
-    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    return voices.find(v => /female|woman|samantha|serena|victoria|karen|moira|tessa|susan|zira/i.test(v.name)) ||
-           voices.find(v => /en-GB|en_US|en-US|en/i.test(v.lang)) ||
-           voices[0];
+    if (!('speechSynthesis' in window)) return null;
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    return voices.slice().sort((a, b) => scoreVoice(b) - scoreVoice(a))[0];
+  }
+
+  function voicesReady(){
+    return new Promise(resolve => {
+      if (!('speechSynthesis' in window)) return resolve();
+      if (speechSynthesis.getVoices().length) return resolve();
+      const onChange = () => {
+        speechSynthesis.removeEventListener('voiceschanged', onChange);
+        resolve();
+      };
+      speechSynthesis.addEventListener('voiceschanged', onChange);
+      setTimeout(resolve, 1500);
+    });
   }
 
   function speakLine(text){
     if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = chooseVoice();
-    if (voice) utterance.voice = voice;
-    utterance.rate = 0.72;
-    utterance.pitch = 0.9;
-    utterance.volume = 0.86;
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang || 'en-GB';
+    } else {
+      utterance.lang = 'en-GB';
+    }
+    utterance.rate = 0.82;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.92;
     speechSynthesis.speak(utterance);
   }
 
@@ -529,10 +566,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline
     threshold.classList.add('playing');
     if (withVoice && 'speechSynthesis' in window) {
       speechSynthesis.cancel();
-      if (!speechSynthesis.getVoices().length) {
-        speechSynthesis.onvoiceschanged = () => {};
-      }
-      lines.forEach(line => setTimeout(() => speakLine(line.text), line.delay));
+      voicesReady().then(() => {
+        lines.forEach(line => setTimeout(() => speakLine(line.text), line.delay));
+      });
     }
   }
 
