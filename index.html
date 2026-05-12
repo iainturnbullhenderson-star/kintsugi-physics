@@ -571,7 +571,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline
       });
     }
   }
-
+if (window._thresholdAudio) { window._thresholdAudio.pause(); window._thresholdAudio = null; }
   function enterSite(){
     if ('speechSynthesis' in window) speechSynthesis.cancel();
     threshold.classList.add('is-dismissed');
@@ -581,7 +581,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--gold2); outline
     }, 1400);
   }
 
-  beginVoice.addEventListener('click', () => startSequence(true));
+  beginVoice.addEventListener('click', () => {
+    const audio = new Audio("mum's Voice.m4a");
+    audio.play();
+    window._thresholdAudio = audio;
+    startSequence(false);
+});
   beginSilent.addEventListener('click', () => startSequence(false));
   enterJourney.addEventListener('click', enterSite);
   skipThreshold.addEventListener('click', enterSite);
